@@ -33,7 +33,7 @@ Implement Phase 3 and Phase 4:
 Do not add a text-only demo path.
 Do not add fake transcription.
 Verify with syntax/import checks and, if possible, run Streamlit locally.
-Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`. You can edit those files but do not stage them.
 ```
 
 ### Prompt 3: Jargon And Real LLM
@@ -53,7 +53,7 @@ Implement Phase 5 and Phase 6:
 Do not add mock simplification.
 If the LLM is unavailable, show a setup/model readiness error instead of fake output.
 Run targeted checks and report the exact model readiness status.
-Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`. You can edit those files but do not stage them.
 ```
 
 ### Prompt 4: Human Review And Final Summary
@@ -71,7 +71,7 @@ Implement Phase 7 and Phase 8:
 
 Ensure rejected terms are excluded and edited explanations appear in the final output.
 Run the app or the closest possible verification and report the demo path status.
-Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`. You can edit those files but do not stage them.
 ```
 
 ### Prompt 5: Demo Polish
@@ -89,5 +89,5 @@ Implement Phase 9:
 
 Do not add mock/demo shortcuts.
 Run a final verification pass and report exactly what was tested.
-Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`. You can edit those files but do not stage them.
 ```
