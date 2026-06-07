@@ -1,0 +1,8 @@
+streamlit>=1.40
+requests
+mlx-whisper
+mlx
+numpy
+
+# Real ASR backup. Install if MLX Whisper is unavailable or unsuitable.
+faster-whisper
