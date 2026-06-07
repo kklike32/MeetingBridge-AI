@@ -140,38 +140,6 @@ Suggested review sequence:
 
 The final notes should include approved and edited terms only. Rejected terms stay out of the human-approved glossary.
 
-## Two-Minute Demo
-
-**0:00-0:15 - Problem**
-
-"Meeting transcripts capture words, but they do not explain meaning. If you are new to a team, joining from another function, or using transcripts for accessibility, acronyms like GTM, ARR, PLG, and churn can block participation."
-
-**0:15-0:30 - Real Audio**
-
-"MeetingBridge AI starts from real meeting audio. I can record through the browser or upload a clip. I will record a short meeting sentence now."
-
-Speak the exact demo sentence.
-
-**0:30-0:50 - Local Transcription**
-
-"The audio is transcribed locally. ASR can mishear acronyms, so I can correct the transcript before analysis."
-
-**0:50-1:15 - Local LLM**
-
-"Now the corrected transcript goes to a real local LLM. Qwen3 8B generates three versions: simple, professional, and expert."
-
-**1:15-1:35 - Human Review**
-
-"AI suggestions stay pending until a human approves, edits, or rejects them."
-
-Approve `GTM`, edit `ARR`, and reject an ambiguous term if one appears.
-
-**1:35-2:00 - Final Notes**
-
-"The final notes use the reviewed glossary, not raw AI output. Participants get a plain-English summary, key terms, action items, and a review audit."
-
-Show the edited `ARR` explanation in the final glossary.
-
 ## Why It Fits The Track
 
 - **AI for Accessibility:** Meeting content becomes understandable for people who need more than a transcript.
@@ -195,7 +163,3 @@ For live validation:
 ```
 
 Then complete the real-audio flow in the browser. If a model is missing, the app should show setup instructions instead of fabricating AI output.
-
-## Repository Rules
-
-Commit source, tests, docs, and docs assets only. Do not commit `.venv/`, `__pycache__/`, generated audio, model files, exported review logs, `AGENTS.md`, `.agents/`, or runtime artifacts.

@@ -224,6 +224,7 @@ def call_ollama(system_prompt: str, user_prompt: str, config: LLMConfig) -> str:
         ],
         "stream": False,
         "format": "json",
+        "think": False,
         "options": {
             "temperature": 0.2,
             "top_p": 0.8,
@@ -239,8 +240,15 @@ def call_ollama(system_prompt: str, user_prompt: str, config: LLMConfig) -> str:
     except ValueError as exc:
         raise LLMClientError("Ollama returned non-JSON HTTP output.", details={"url": url}) from exc
 
-    content = data.get("message", {}).get("content") if isinstance(data, dict) else None
+    message = data.get("message", {}) if isinstance(data, dict) else {}
+    content = message.get("content") if isinstance(message, dict) else None
     if not isinstance(content, str) or not content.strip():
+        thinking = message.get("thinking") if isinstance(message, dict) else None
+        if isinstance(thinking, str) and thinking.strip():
+            raise LLMClientError(
+                "Ollama returned thinking text but no final JSON content. Retry after keeping Qwen thinking disabled.",
+                details={"url": url, "done_reason": data.get("done_reason") if isinstance(data, dict) else None},
+            )
         raise LLMClientError("Ollama response did not include message.content.", details={"url": url})
     return content
 

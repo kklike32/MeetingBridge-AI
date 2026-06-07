@@ -6,6 +6,7 @@ from src.llm_client import (
     LLMClientError,
     LLMConfig,
     build_meeting_intelligence_prompt,
+    call_ollama,
     extract_json_object,
     generate_meeting_intelligence,
     strip_thinking_blocks,
@@ -122,6 +123,18 @@ class LLMClientTests(unittest.TestCase):
         self.assertEqual(call.call_count, 1)
         self.assertEqual(result["provider"], "lm_studio")
         self.assertEqual(result["model"], "local-model")
+
+    def test_ollama_disables_thinking_mode(self):
+        config = LLMConfig(provider="ollama", model="qwen3:8b", base_url="http://localhost:11434")
+        response = MagicMock()
+        response.json.return_value = {"message": {"content": json.dumps({"ok": True})}}
+        response.raise_for_status.return_value = None
+
+        with patch("src.llm_client.requests.post", return_value=response) as post:
+            content = call_ollama("/no_think", "Return JSON.", config)
+
+        self.assertEqual(content, json.dumps({"ok": True}))
+        self.assertIs(post.call_args.kwargs["json"]["think"], False)
 
 
 if __name__ == "__main__":
