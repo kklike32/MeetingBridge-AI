@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
+import re
 
 import streamlit as st
 
@@ -16,6 +18,13 @@ from src.model_preflight import (
     check_ollama_model,
     check_streamlit_audio_available,
 )
+from src.review import (
+    apply_review_action,
+    approved_glossary_from_review,
+    initialize_review_items,
+    review_progress,
+)
+from src.summary import final_summary_to_json, final_summary_to_markdown, generate_final_summary
 from src.transcription import FASTER_WHISPER_MODEL, MLX_WHISPER_MODEL, transcribe_audio
 
 
@@ -40,6 +49,10 @@ SESSION_DEFAULTS = {
     "baseline_terms": [],
     "merged_terms": [],
     "meeting_intelligence": None,
+    "review_items": {},
+    "review_audit": [],
+    "approved_glossary": {},
+    "final_summary": None,
     "llm_status": {
         "ready": False,
         "provider": None,
@@ -86,6 +99,149 @@ def selected_audio(recorded_audio, uploaded_audio):
     if uploaded_audio is not None:
         return uploaded_audio, "upload"
     return None, None
+
+
+def widget_key(prefix: str, term: str) -> str:
+    normalized = re.sub(r"[^a-zA-Z0-9]+", "_", term.strip().lower()).strip("_")
+    return f"{prefix}_{normalized or 'term'}"
+
+
+def render_review_panel() -> None:
+    review_items = st.session_state.get("review_items", {})
+    if not review_items:
+        st.info("Run local LLM analysis to create review items.")
+        return
+
+    progress = review_progress(review_items)
+    metric_columns = st.columns(5)
+    for column, status in zip(metric_columns, ["pending", "approved", "edited", "rejected", "total"]):
+        column.metric(status.title(), progress[status])
+
+    for term, item in review_items.items():
+        with st.expander(f"{item['term']} - {item['status'].title()}", expanded=item["status"] == "pending"):
+            st.markdown(f"**Meaning:** {item['canonical']}")
+            st.write(item["current_explanation"])
+            st.caption(
+                f"Source: {item.get('source', 'unknown')} | "
+                f"Confidence: {float(item.get('confidence', 0.0)):.0%} | "
+                f"Model: {item.get('model') or 'unknown'}"
+            )
+
+            edit_key = widget_key("edit", term)
+            st.text_area(
+                "Edit explanation",
+                value=item["current_explanation"],
+                key=edit_key,
+                height=90,
+            )
+            approve_col, edit_col, reject_col = st.columns(3)
+            with approve_col:
+                if st.button("Approve", key=widget_key("approve", term)):
+                    apply_review_action(review_items, st.session_state["review_audit"], term, "approve")
+                    st.session_state["approved_glossary"] = approved_glossary_from_review(review_items)
+                    st.session_state["final_summary"] = None
+                    st.rerun()
+            with edit_col:
+                if st.button("Save Edit", key=widget_key("save_edit", term)):
+                    try:
+                        apply_review_action(
+                            review_items,
+                            st.session_state["review_audit"],
+                            term,
+                            "edit",
+                            edited_text=st.session_state.get(edit_key, ""),
+                        )
+                    except ValueError as exc:
+                        st.warning(str(exc))
+                    else:
+                        st.session_state["approved_glossary"] = approved_glossary_from_review(review_items)
+                        st.session_state["final_summary"] = None
+                        st.rerun()
+            with reject_col:
+                if st.button("Reject", key=widget_key("reject", term)):
+                    apply_review_action(review_items, st.session_state["review_audit"], term, "reject")
+                    st.session_state["approved_glossary"] = approved_glossary_from_review(review_items)
+                    st.session_state["final_summary"] = None
+                    st.rerun()
+
+    with st.expander("Review audit trail"):
+        if st.session_state["review_audit"]:
+            st.json(st.session_state["review_audit"])
+            st.download_button(
+                "Export review audit JSON",
+                data=json.dumps(st.session_state["review_audit"], ensure_ascii=True, indent=2),
+                file_name="meetingbridge_review_audit.json",
+                mime="application/json",
+            )
+        else:
+            st.info("No review actions recorded yet.")
+
+
+def render_final_summary(intelligence: dict) -> None:
+    review_items = st.session_state.get("review_items", {})
+    approved_glossary = approved_glossary_from_review(review_items)
+    st.session_state["approved_glossary"] = approved_glossary
+
+    if not approved_glossary:
+        st.warning("Approve or edit at least one term to populate the human-approved glossary.")
+
+    if st.button("Generate Final Summary", type="primary", disabled=not intelligence):
+        st.session_state["final_summary"] = generate_final_summary(
+            transcript=st.session_state["transcript_corrected"],
+            simplifications=intelligence["simplifications"],
+            action_items=intelligence.get("action_items", []),
+            review_items=review_items,
+            review_audit=st.session_state["review_audit"],
+            asr_status=st.session_state["asr_status"],
+            llm_status=st.session_state["llm_status"],
+        )
+
+    summary = st.session_state.get("final_summary")
+    if not summary:
+        return
+
+    st.markdown("**Plain English summary**")
+    st.write(summary["plain_english_summary"])
+
+    st.markdown("**Key terms**")
+    if summary["key_terms"]:
+        for term in summary["key_terms"]:
+            st.write(f"- **{term['term']}**: {term['canonical']}")
+    else:
+        st.write("- No approved key terms yet.")
+
+    st.markdown("**Action items**")
+    if summary["action_items"]:
+        for item in summary["action_items"]:
+            st.write(f"- {item}")
+    else:
+        st.write("- No action items generated.")
+
+    st.markdown("**Human-approved glossary**")
+    if summary["human_approved_glossary"]:
+        for entry in summary["human_approved_glossary"]:
+            st.write(f"- **{entry['term']}** ({entry['canonical']}): {entry['explanation']}")
+    else:
+        st.write("- No approved glossary entries yet.")
+
+    metadata = summary["model_metadata"]
+    st.caption(
+        f"ASR: {metadata['asr'].get('provider')} `{metadata['asr'].get('model')}` | "
+        f"LLM: {metadata['llm'].get('provider')} `{metadata['llm'].get('model')}`"
+    )
+
+    st.download_button(
+        "Download summary as JSON",
+        data=final_summary_to_json(summary),
+        file_name="meetingbridge_summary.json",
+        mime="application/json",
+    )
+    st.download_button(
+        "Download summary as Markdown",
+        data=final_summary_to_markdown(summary),
+        file_name="meetingbridge_summary.md",
+        mime="text/markdown",
+    )
 
 
 def main() -> None:
@@ -214,6 +370,10 @@ def main() -> None:
                 st.session_state["baseline_terms"] = []
                 st.session_state["merged_terms"] = []
                 st.session_state["meeting_intelligence"] = None
+                st.session_state["review_items"] = {}
+                st.session_state["review_audit"] = []
+                st.session_state["approved_glossary"] = {}
+                st.session_state["final_summary"] = None
             else:
                 st.session_state["transcript_raw"] = ""
                 st.session_state["transcript_corrected"] = ""
@@ -284,6 +444,9 @@ def main() -> None:
                 except LLMClientError as exc:
                     st.session_state["meeting_intelligence"] = None
                     st.session_state["merged_terms"] = baseline_terms
+                    st.session_state["review_items"] = {}
+                    st.session_state["approved_glossary"] = {}
+                    st.session_state["final_summary"] = None
                     st.session_state["llm_status"] = {
                         "ready": False,
                         "provider": llm_provider,
@@ -296,6 +459,13 @@ def main() -> None:
                     merged_terms = detect_terms(corrected_transcript, llm_terms=intelligence["glossary"])
                     st.session_state["meeting_intelligence"] = intelligence
                     st.session_state["merged_terms"] = merged_terms
+                    st.session_state["review_items"] = initialize_review_items(
+                        merged_terms,
+                        model=intelligence["model"],
+                    )
+                    st.session_state["review_audit"] = []
+                    st.session_state["approved_glossary"] = {}
+                    st.session_state["final_summary"] = None
                     st.session_state["llm_status"] = {
                         "ready": True,
                         "provider": intelligence["provider"],
@@ -348,6 +518,13 @@ def main() -> None:
                 hide_index=True,
                 use_container_width=True,
             )
+
+        if intelligence:
+            st.subheader("Human Review")
+            render_review_panel()
+
+            st.subheader("Final Summary And Export")
+            render_final_summary(intelligence)
     elif st.session_state["asr_status"]["last_error"]:
         st.error(st.session_state["asr_status"]["last_error"])
         st.code(
@@ -370,6 +547,9 @@ def main() -> None:
                 "llm_status": st.session_state["llm_status"],
                 "baseline_terms": st.session_state["baseline_terms"],
                 "merged_terms": st.session_state["merged_terms"],
+                "review_items": st.session_state["review_items"],
+                "review_audit": st.session_state["review_audit"],
+                "final_summary": st.session_state["final_summary"],
             }
         )
 

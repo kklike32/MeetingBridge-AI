@@ -4,7 +4,7 @@ Local Streamlit MVP for real meeting audio transcription, local LLM simplificati
 
 Repository: https://github.com/kklike32/MeetingBridge-AI
 
-This repo is currently implemented through Phase 6:
+This repo is currently implemented through Phase 8:
 
 - Phase 1: runtime files and minimal Streamlit page
 - Phase 2: dependency and local model preflight
@@ -12,8 +12,8 @@ This repo is currently implemented through Phase 6:
 - Phase 4: real local ASR transcription with MLX Whisper primary and faster-whisper backup
 - Phase 5: static dictionary, acronym detection, and baseline heuristic jargon detection
 - Phase 6: real local LLM simplification, JSON validation, retry handling, and merged glossary candidates
-
-Human review and export are intentionally not implemented yet.
+- Phase 7: human review with approve, edit, reject, session-state audit trail, and approved glossary generation
+- Phase 8: final summary with model metadata plus JSON, Markdown, and review audit exports
 
 ## Setup
 
@@ -72,10 +72,15 @@ The demo must start from real audio:
 4. Correct the transcript only after ASR has produced text.
 5. Review baseline jargon candidates.
 6. Click `Analyze with local LLM` to generate real model simplifications and merged glossary candidates.
+7. Review terms: approve `GTM`, edit `ARR` to `The predictable subscription revenue the business expects each year.`, and reject an ambiguous term such as `motion` if it appears.
+8. Generate the final summary and confirm rejected terms are excluded while edited explanations appear in the human-approved glossary.
+9. Download the summary as JSON or Markdown, or export the review audit JSON.
 
 There is no paste-only transcript route and no fake transcription fallback.
 
 LLM analysis uses the selected real local model only. If Ollama or LM Studio is unavailable, or if the selected model is missing or returns malformed JSON after one retry, the app shows the setup/model error and does not generate fake simplifications.
+
+Review state is local to the current Streamlit session. The app does not write a database; review decisions and audit entries are available through explicit download buttons.
 
 MLX Whisper requires Apple Metal/GPU access. In sandboxed or headless sessions, the package can be installed but fail at runtime with a Metal device error. In that case, run the Streamlit app from a normal macOS Terminal session or use the real `faster-whisper` backup path.
 
