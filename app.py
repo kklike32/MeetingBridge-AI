@@ -61,7 +61,6 @@ SESSION_DEFAULTS = {
     "approved_glossary": {},
     "action_items_review_text": "",
     "final_summary": None,
-    "meeting_started": False,
     "llm_status": {
         "ready": False,
         "provider": None,
@@ -72,15 +71,12 @@ SESSION_DEFAULTS = {
     },
 }
 WORKFLOW_STEPS = [
-    ("Start meeting", "Open the guided workflow"),
-    ("Record or upload audio", "Use microphone or upload"),
-    ("Transcribe", "Run local ASR"),
-    ("Review transcript", "Correct ASR text"),
-    ("Explain jargon", "Run local LLM"),
-    ("Approve explanations", "Human review gate"),
-    ("Confirm action items", "Review next steps"),
-    ("Participant notes", "Generate accessible view"),
-    ("Export", "Download notes and audit"),
+    "Audio",
+    "Transcript",
+    "Explain",
+    "Review",
+    "Notes",
+    "Export",
 ]
 
 
@@ -117,7 +113,7 @@ def inject_accessible_theme() -> None:
 
         .block-container {
             max-width: 1180px;
-            padding-top: 2rem;
+            padding-top: 1.25rem;
             padding-bottom: 4rem;
         }
 
@@ -127,9 +123,9 @@ def inject_accessible_theme() -> None:
 
         h1 {
             color: var(--mb-ink);
-            font-size: 3rem !important;
+            font-size: 2.35rem !important;
             line-height: 1.08 !important;
-            margin-bottom: 0.35rem !important;
+            margin-bottom: 0.2rem !important;
         }
 
         h2, h3 {
@@ -145,48 +141,49 @@ def inject_accessible_theme() -> None:
         .mb-hero {
             background: linear-gradient(135deg, #ffffff 0%, #eef7ff 50%, #fff6ec 100%);
             border: 1px solid var(--mb-border);
-            border-radius: 28px;
+            border-radius: 24px;
             box-shadow: var(--mb-shadow);
-            padding: 2rem;
-            margin-bottom: 1.25rem;
+            padding: 1.15rem 1.35rem;
+            margin-bottom: 0.8rem;
         }
 
         .mb-hero p {
             color: #33445f;
-            font-size: 1.12rem;
-            max-width: 780px;
+            font-size: 1.02rem;
+            max-width: 820px;
+            margin-bottom: 0;
         }
 
         .mb-stepper {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
-            gap: 0.7rem;
-            margin: 1rem 0 1.35rem;
+            align-items: center;
+            display: flex;
+            gap: 0.4rem;
+            margin: 0.6rem 0 0.9rem;
         }
 
         .mb-step {
-            min-height: 104px;
-            border: 2px solid var(--mb-border);
+            align-items: center;
             background: rgba(255, 255, 255, 0.88);
-            border-radius: 22px;
-            padding: 0.82rem 0.9rem;
-            box-shadow: 0 8px 20px rgba(46, 72, 112, 0.07);
+            border: 2px solid var(--mb-border);
+            border-radius: 999px;
+            display: inline-flex;
+            gap: 0.45rem;
+            min-height: 42px;
+            padding: 0.45rem 0.75rem;
+            white-space: nowrap;
         }
 
         .mb-step strong {
-            display: block;
             color: var(--mb-ink);
-            font-size: 0.98rem;
-            line-height: 1.25;
-            margin-top: 0.38rem;
+            display: inline;
+            font-size: 0.94rem;
+            line-height: 1;
+            margin-top: 0;
         }
 
-        .mb-step small {
-            display: block;
-            color: var(--mb-muted);
-            font-size: 0.86rem;
-            line-height: 1.35;
-            margin-top: 0.2rem;
+        .mb-stepper-separator {
+            color: #6b7890;
+            font-weight: 800;
         }
 
         .mb-step .mb-bubble {
@@ -197,15 +194,15 @@ def inject_accessible_theme() -> None:
             color: var(--mb-primary-dark);
             display: inline-flex;
             font-weight: 800;
-            height: 2rem;
+            height: 1.6rem;
             justify-content: center;
-            width: 2rem;
+            width: 1.6rem;
         }
 
         .mb-step.current {
             border-color: var(--mb-primary);
             background: #eef4ff;
-            box-shadow: 0 0 0 4px rgba(40, 80, 184, 0.14), var(--mb-shadow);
+            box-shadow: 0 0 0 3px rgba(40, 80, 184, 0.14);
         }
 
         .mb-step.done {
@@ -216,13 +213,13 @@ def inject_accessible_theme() -> None:
         .mb-section-intro {
             background: rgba(255, 255, 255, 0.82);
             border: 1px solid var(--mb-border);
-            border-radius: 24px;
-            padding: 1rem 1.2rem;
-            margin: 1.15rem 0 0.75rem;
+            border-radius: 20px;
+            padding: 0.7rem 0.9rem;
+            margin: 0.8rem 0 0.55rem;
         }
 
         .mb-section-intro h2 {
-            font-size: 1.45rem !important;
+            font-size: 1.18rem !important;
             margin: 0 0 0.2rem !important;
         }
 
@@ -232,17 +229,17 @@ def inject_accessible_theme() -> None:
 
         .mb-status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 0.85rem;
-            margin: 0.75rem 0 1rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem;
+            margin: 0.4rem 0 0.6rem;
         }
 
         .mb-status-card {
             border: 2px solid var(--mb-border);
-            border-radius: 22px;
-            padding: 1rem;
+            border-radius: 18px;
+            padding: 0.75rem;
             background: var(--mb-surface);
-            min-height: 134px;
+            min-height: 104px;
             box-shadow: 0 8px 22px rgba(46, 72, 112, 0.07);
         }
 
@@ -273,16 +270,16 @@ def inject_accessible_theme() -> None:
 
         div[data-testid="stVerticalBlockBorderWrapper"] {
             border-color: var(--mb-border);
-            border-radius: 24px;
-            box-shadow: 0 8px 24px rgba(46, 72, 112, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 8px 22px rgba(46, 72, 112, 0.07);
             background: rgba(255, 255, 255, 0.90);
         }
 
         div.stButton > button,
         div[data-testid="stDownloadButton"] > button {
             border-radius: 999px;
-            min-height: 48px;
-            padding: 0.7rem 1.15rem;
+            min-height: 44px;
+            padding: 0.58rem 1.05rem;
             font-weight: 800;
             border: 2px solid var(--mb-primary);
         }
@@ -333,26 +330,6 @@ def inject_accessible_theme() -> None:
             border-radius: 18px;
             overflow: hidden;
         }
-
-        @media (max-width: 720px) {
-            .block-container {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-
-            h1 {
-                font-size: 2.25rem !important;
-            }
-
-            .mb-hero {
-                padding: 1.25rem;
-                border-radius: 22px;
-            }
-
-            .mb-step {
-                min-height: auto;
-            }
-        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -401,21 +378,17 @@ def render_section_intro(title: str, description: str) -> None:
 
 def current_workflow_index() -> int:
     if st.session_state.get("final_summary"):
-        return 8
+        return 5
     if st.session_state.get("meeting_intelligence"):
         gate_ready = review_gate_status(st.session_state.get("review_items", {}))["ready"]
         if gate_ready and st.session_state.get("action_items_review_text", "").strip():
-            return 7
-        if gate_ready:
-            return 6
-        return 5
-    if st.session_state.get("transcript_corrected"):
-        return 4
-    if st.session_state.get("asr_status", {}).get("last_transcribed_at"):
+            return 4
         return 3
-    if st.session_state.get("audio_temp_path"):
+    if st.session_state.get("transcript_corrected"):
         return 2
-    if st.session_state.get("meeting_started"):
+    if st.session_state.get("asr_status", {}).get("last_transcribed_at"):
+        return 1
+    if st.session_state.get("audio_temp_path"):
         return 1
     return 0
 
@@ -423,7 +396,7 @@ def current_workflow_index() -> int:
 def render_workflow_stepper() -> None:
     current = current_workflow_index()
     step_markup = []
-    for index, (label, description) in enumerate(WORKFLOW_STEPS):
+    for index, label in enumerate(WORKFLOW_STEPS):
         if index < current:
             state = "done"
             marker = "OK"
@@ -436,11 +409,12 @@ def render_workflow_stepper() -> None:
             state = ""
             marker = str(index + 1)
             state_text = "Upcoming"
+        if step_markup:
+            step_markup.append('<span class="mb-stepper-separator">/</span>')
         step_markup.append(
             f'<div class="mb-step {state}" aria-label="{_html_escape(label)}: {state_text}">'
             f'<span class="mb-bubble">{marker}</span>'
             f"<strong>{_html_escape(label)}</strong>"
-            f"<small>{state_text}. {_html_escape(description)}</small>"
             f"</div>"
         )
     st.markdown(f"<div class=\"mb-stepper\">{''.join(step_markup)}</div>", unsafe_allow_html=True)
@@ -452,22 +426,12 @@ def render_hero() -> None:
         <div class="mb-hero">
             <h1>MeetingBridge AI</h1>
             <p>
-                Turn real meeting audio into readable transcripts, plain-language explanations,
-                human-approved glossary terms, and accessible participant notes.
+                Record or upload meeting audio, then turn it into reviewed accessible notes.
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    start_col, reset_col = st.columns([1, 1])
-    with start_col:
-        if st.button("Start meeting", type="primary", use_container_width=True):
-            st.session_state["meeting_started"] = True
-            st.rerun()
-    with reset_col:
-        if st.button("Reset meeting", use_container_width=True):
-            reset_audio_state()
-            st.rerun()
 
 
 def _html_escape(value: object) -> str:
@@ -824,11 +788,12 @@ def main() -> None:
             results["LM Studio"] = check_lm_studio_model(lm_studio_base_url, lm_studio_model.strip())
         st.session_state["preflight_results"] = results
 
-    render_section_intro(
-        "Setup readiness",
-        "These checks confirm whether the selected local speech and language models are ready. Blockers are explicit and actionable.",
-    )
-    render_preflight_cards(results)
+    has_setup_blocker = any(not result.ready for result in results.values())
+    if has_setup_blocker:
+        st.warning("Setup blocker detected. Open readiness details for the exact fix.")
+    with st.expander("Setup readiness", expanded=has_setup_blocker):
+        st.write("Local model checks stay here so audio capture remains the main workspace.")
+        render_preflight_cards(results)
     if show_diagnostics:
         with st.expander("Detailed readiness messages"):
             for label, result in results.items():
@@ -836,16 +801,12 @@ def main() -> None:
                 render_result(result)
 
     render_section_intro(
-        "Record or upload audio",
-        "Start from real meeting audio. Text correction appears only after local transcription has produced a transcript.",
+        "Meeting audio",
+        "Record with the browser microphone or upload a meeting clip. The transcript field appears only after local ASR runs.",
     )
-    if not st.session_state.get("meeting_started"):
-        st.info("Press Start meeting when you are ready. You can still review setup status before beginning.")
 
     with st.container(border=True):
-        st.markdown("**Demo sentence to speak or upload**")
-        st.code(DEMO_SENTENCE, language="text")
-        audio_columns = st.columns(2)
+        audio_columns = st.columns([1.1, 1])
         with audio_columns[0]:
             recorded_audio = st.audio_input("Record meeting audio", sample_rate=16000)
         with audio_columns[1]:
@@ -853,6 +814,8 @@ def main() -> None:
                 "Upload meeting audio",
                 type=["wav", "mp3", "m4a", "mp4"],
             )
+        with st.expander("Demo sentence"):
+            st.code(DEMO_SENTENCE, language="text")
 
     audio_obj, audio_source = selected_audio(recorded_audio, uploaded_audio)
     if recorded_audio is not None and uploaded_audio is not None:
@@ -863,9 +826,7 @@ def main() -> None:
         st.warning("Record microphone audio or upload an audio file before transcription.")
 
     with st.container(border=True):
-        st.markdown("**Transcribe with local ASR**")
-        st.write("MeetingBridge uses MLX Whisper first when selected, with faster-whisper as a real backup path.")
-        col_transcribe, col_clear = st.columns([1, 1])
+        col_transcribe, col_clear = st.columns([2, 1])
         with col_transcribe:
             transcribe_clicked = st.button(
                 "Transcribe audio",
@@ -922,11 +883,11 @@ def main() -> None:
                 st.session_state["transcript_raw"] = ""
                 st.session_state["transcript_corrected"] = ""
 
-    render_section_intro(
-        "Review transcript",
-        "Correct recognition errors here before any jargon detection or LLM simplification runs.",
-    )
     if st.session_state["asr_status"]["last_transcribed_at"]:
+        render_section_intro(
+            "Transcript",
+            "Correct recognition errors before jargon detection or LLM simplification runs.",
+        )
         status = st.session_state["asr_status"]
         st.markdown(
             f"**Source:** {st.session_state['audio_source']} | "
@@ -959,27 +920,27 @@ def main() -> None:
         st.session_state["baseline_terms"] = baseline_terms
 
         render_section_intro(
-            "Explain jargon",
-            "MeetingBridge first finds obvious acronyms and terms, then asks the selected real local LLM for contextual explanations.",
+            "Explain",
+            "Run the selected local LLM after the transcript looks right.",
         )
-        st.markdown("**Baseline jargon detection**")
-        if baseline_terms:
-            st.dataframe(
-                [
-                    {
-                        "term": term["term"],
-                        "canonical": term["canonical"],
-                        "source": term["source"],
-                        "confidence": term["confidence"],
-                        "needs_review": term["needs_review"],
-                    }
-                    for term in baseline_terms
-                ],
-                hide_index=True,
-                use_container_width=True,
-            )
-        else:
-            st.info("No baseline jargon candidates were found in the corrected transcript.")
+        with st.expander("Baseline jargon candidates", expanded=False):
+            if baseline_terms:
+                st.dataframe(
+                    [
+                        {
+                            "term": term["term"],
+                            "canonical": term["canonical"],
+                            "source": term["source"],
+                            "confidence": term["confidence"],
+                            "needs_review": term["needs_review"],
+                        }
+                        for term in baseline_terms
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
+            else:
+                st.info("No baseline jargon candidates were found in the corrected transcript.")
 
         llm_model = ollama_model if llm_provider == "ollama" else lm_studio_model.strip()
         llm_base_url = ollama_base_url if llm_provider == "ollama" else lm_studio_base_url
@@ -1061,38 +1022,43 @@ def main() -> None:
                     st.write(f"- {item}")
 
         merged_terms = st.session_state.get("merged_terms") or baseline_terms
-        if merged_terms:
-            st.subheader("Merged Glossary Candidates")
-            st.dataframe(
-                [
-                    {
-                        "term": term["term"],
-                        "canonical": term["canonical"],
-                        "explanation": term["explanation"],
-                        "source": term["source"],
-                        "confidence": term["confidence"],
-                        "needs_review": term["needs_review"],
-                    }
-                    for term in merged_terms
-                ],
-                hide_index=True,
-                use_container_width=True,
-            )
+        if intelligence and merged_terms:
+            with st.expander("Merged glossary candidates", expanded=False):
+                st.dataframe(
+                    [
+                        {
+                            "term": term["term"],
+                            "canonical": term["canonical"],
+                            "explanation": term["explanation"],
+                            "source": term["source"],
+                            "confidence": term["confidence"],
+                            "needs_review": term["needs_review"],
+                        }
+                        for term in merged_terms
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
 
         if intelligence:
             render_section_intro(
-                "Approve explanations",
+                "Review",
                 "AI output stays pending until a human approves, edits, or rejects each explanation.",
             )
             render_review_panel()
-            render_action_item_review(intelligence)
 
-            render_section_intro(
-                "Participant notes and export",
-                "Generate plain-language notes after the review gate is complete, then download JSON, Markdown, or the review audit.",
-            )
-            render_final_summary(intelligence)
+            if review_gate_status(st.session_state.get("review_items", {}))["ready"]:
+                render_action_item_review(intelligence)
+                render_section_intro(
+                    "Notes and export",
+                    "Generate participant notes after review, then download JSON, Markdown, or audit records.",
+                )
+                render_final_summary(intelligence)
     elif st.session_state["asr_status"]["last_error"]:
+        render_section_intro(
+            "Transcript",
+            "Local ASR did not complete. Fix the setup issue and transcribe again.",
+        )
         st.error(st.session_state["asr_status"]["last_error"])
         st.code(
             "pip install -r requirements.txt\n"
@@ -1100,8 +1066,6 @@ def main() -> None:
             "python -c \"import faster_whisper; print('faster-whisper ready')\"",
             language="bash",
         )
-    else:
-        st.info("Transcribe a recorded or uploaded clip to unlock the correction field.")
 
     if show_diagnostics:
         st.subheader("Diagnostics")
