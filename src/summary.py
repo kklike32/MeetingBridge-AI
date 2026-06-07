@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from src.review import approved_glossary_from_review
+from src.review import approved_glossary_from_review, review_progress
 
 
 def generate_final_summary(
@@ -30,7 +30,7 @@ def generate_final_summary(
             {"term": item["term"], "canonical": item["canonical"]}
             for item in glossary_entries
         ],
-        "action_items": [item.strip() for item in action_items if isinstance(item, str) and item.strip()],
+        "action_items": normalize_action_items(action_items),
         "human_approved_glossary": glossary_entries,
         "needs_review": pending_terms,
         "model_metadata": {
@@ -45,6 +45,7 @@ def generate_final_summary(
                 "last_analyzed_at": llm_status.get("last_analyzed_at"),
             },
         },
+        "review_progress": review_progress(review_items),
         "review_audit": list(review_audit),
     }
 
@@ -53,9 +54,22 @@ def final_summary_to_json(summary: dict[str, Any]) -> str:
     return json.dumps(summary, ensure_ascii=True, indent=2)
 
 
+def normalize_action_items(action_items: list[str] | tuple[str, ...] | str | None) -> list[str]:
+    if isinstance(action_items, str):
+        candidates = action_items.splitlines()
+    elif action_items is None:
+        candidates = []
+    else:
+        candidates = list(action_items)
+    return [item.strip("- \t") for item in candidates if isinstance(item, str) and item.strip("- \t")]
+
+
 def final_summary_to_markdown(summary: dict[str, Any]) -> str:
     lines = [
         "# MeetingBridge AI Summary",
+        "",
+        "## Corrected Transcript",
+        summary.get("transcript", "") or "No corrected transcript available.",
         "",
         "## Plain English Summary",
         summary.get("plain_english_summary", "") or "No summary generated.",
@@ -90,6 +104,17 @@ def final_summary_to_markdown(summary: dict[str, Any]) -> str:
     llm = metadata.get("llm", {})
     lines.append(f"- ASR: {_metadata_label(asr)}")
     lines.append(f"- LLM: {_metadata_label(llm)}")
+
+    lines.extend(["", "## Review Audit"])
+    audit = summary.get("review_audit") or []
+    if audit:
+        for entry in audit:
+            lines.append(
+                f"- {entry.get('timestamp', 'unknown time')} - "
+                f"{entry.get('term', 'unknown term')}: {entry.get('action', 'unknown action')}"
+            )
+    else:
+        lines.append("- No review actions recorded.")
 
     return "\n".join(lines).strip() + "\n"
 

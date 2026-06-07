@@ -4,6 +4,7 @@ from src.review import (
     apply_review_action,
     approved_glossary_from_review,
     initialize_review_items,
+    review_gate_status,
     review_progress,
 )
 
@@ -89,6 +90,22 @@ class ReviewTests(unittest.TestCase):
             review_progress(items),
             {"pending": 1, "approved": 1, "edited": 0, "rejected": 1, "total": 3},
         )
+
+    def test_review_gate_requires_every_item_to_be_approved_edited_or_rejected(self):
+        items = initialize_review_items(DETECTED_TERMS, model="qwen3:8b")
+        audit = []
+
+        self.assertFalse(review_gate_status(items)["ready"])
+        apply_review_action(items, audit, "GTM", "approve", timestamp="2026-06-07T12:00:00Z")
+        apply_review_action(items, audit, "ARR", "edit", edited_text="Predictable yearly subscription revenue.")
+        apply_review_action(items, audit, "motion", "reject")
+
+        gate = review_gate_status(items)
+
+        self.assertTrue(gate["ready"])
+        self.assertEqual(gate["pending"], 0)
+        self.assertEqual(gate["reviewed"], 3)
+        self.assertEqual(gate["total"], 3)
 
 
 if __name__ == "__main__":

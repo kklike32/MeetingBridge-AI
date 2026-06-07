@@ -81,10 +81,14 @@ Current implementation status:
 - Repo scaffold is in place.
 - Streamlit app shell exists.
 - Dependency and model preflight is implemented.
-- Local Python virtual environment has been created.
-- Streamlit, MLX Whisper, faster-whisper, and Ollama model setup have been installed/prepared.
-- Ollama `qwen3:8b` is available locally.
-- Audio recording, upload, real transcription, jargon detection, LLM simplification, human review, final summary, and export are planned but not fully implemented yet.
+- Required microphone recording and audio upload are implemented.
+- Real local ASR transcription is wired through MLX Whisper primary and faster-whisper backup.
+- Transcript correction happens only after ASR output exists.
+- Static, heuristic, acronym, and local LLM glossary candidates are merged for review.
+- Real local LLM simplification is wired through Ollama or LM Studio with strict JSON validation and no mock fallback.
+- Human review is implemented with approve, edit, reject, progress counts, a review gate, and an audit trail.
+- Final accessible meeting notes are implemented with a readable corrected transcript, plain English summary, key terms, action items, human-approved glossary, ASR/LLM metadata, review audit, and JSON/Markdown downloads.
+- Generated action items can be confirmed or edited before final notes.
 
 ## How was AI used in your solution?
 

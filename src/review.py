@@ -116,6 +116,16 @@ def review_progress(review_items: dict[str, dict[str, Any]]) -> dict[str, int]:
     return counts
 
 
+def review_gate_status(review_items: dict[str, dict[str, Any]]) -> dict[str, int | bool]:
+    progress = review_progress(review_items)
+    reviewed = progress["approved"] + progress["edited"] + progress["rejected"]
+    return {
+        **progress,
+        "reviewed": reviewed,
+        "ready": progress["pending"] == 0,
+    }
+
+
 def _find_item(review_items: dict[str, dict[str, Any]], term: str) -> dict[str, Any] | None:
     if term in review_items:
         return review_items[term]

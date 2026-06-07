@@ -22,9 +22,15 @@ from src.review import (
     apply_review_action,
     approved_glossary_from_review,
     initialize_review_items,
+    review_gate_status,
     review_progress,
 )
-from src.summary import final_summary_to_json, final_summary_to_markdown, generate_final_summary
+from src.summary import (
+    final_summary_to_json,
+    final_summary_to_markdown,
+    generate_final_summary,
+    normalize_action_items,
+)
 from src.transcription import FASTER_WHISPER_MODEL, MLX_WHISPER_MODEL, transcribe_audio
 
 
@@ -52,6 +58,7 @@ SESSION_DEFAULTS = {
     "review_items": {},
     "review_audit": [],
     "approved_glossary": {},
+    "action_items_review_text": "",
     "final_summary": None,
     "llm_status": {
         "ready": False,
@@ -113,13 +120,27 @@ def render_review_panel() -> None:
         return
 
     progress = review_progress(review_items)
+    gate = review_gate_status(review_items)
     metric_columns = st.columns(5)
     for column, status in zip(metric_columns, ["pending", "approved", "edited", "rejected", "total"]):
         column.metric(status.title(), progress[status])
 
+    st.markdown(
+        f"**Review gate:** {gate['reviewed']} of {gate['total']} explanations reviewed. "
+        f"{gate['pending']} pending."
+    )
+    if gate["ready"]:
+        st.success("Review gate is complete. Final notes will use only approved or edited glossary items.")
+    else:
+        st.warning("Approve, edit, or reject every explanation before generating final accessible notes.")
+
     for term, item in review_items.items():
-        with st.expander(f"{item['term']} - {item['status'].title()}", expanded=item["status"] == "pending"):
+        status_label = item["status"].title()
+        with st.expander(f"{item['term']} - Review status: {status_label}", expanded=item["status"] == "pending"):
             st.markdown(f"**Meaning:** {item['canonical']}")
+            st.markdown(f"**Review status:** {status_label}")
+            st.markdown(f"**Review required:** {'Yes' if item.get('needs_review') else 'No'}")
+            st.markdown("**Current explanation:**")
             st.write(item["current_explanation"])
             st.caption(
                 f"Source: {item.get('source', 'unknown')} | "
@@ -177,19 +198,45 @@ def render_review_panel() -> None:
             st.info("No review actions recorded yet.")
 
 
+def render_action_item_review(intelligence: dict) -> None:
+    st.subheader("Action Items Review")
+    st.write("Confirm or edit the generated action items before final notes. Put one action item on each line.")
+    st.text_area(
+        "Confirmed action items",
+        key="action_items_review_text",
+        height=120,
+    )
+    action_items = normalize_action_items(st.session_state.get("action_items_review_text", ""))
+    st.caption(f"{len(action_items)} action item(s) will be included in the final notes.")
+    if action_items:
+        for item in action_items:
+            st.write(f"- {item}")
+    elif intelligence.get("action_items"):
+        st.warning("No confirmed action items are currently selected for the final notes.")
+    else:
+        st.info("The local LLM did not generate action items for this transcript.")
+
+
 def render_final_summary(intelligence: dict) -> None:
     review_items = st.session_state.get("review_items", {})
     approved_glossary = approved_glossary_from_review(review_items)
+    gate = review_gate_status(review_items)
     st.session_state["approved_glossary"] = approved_glossary
 
     if not approved_glossary:
-        st.warning("Approve or edit at least one term to populate the human-approved glossary.")
+        st.warning("No terms have been approved or edited. The final glossary will be empty.")
 
-    if st.button("Generate Final Summary", type="primary", disabled=not intelligence):
+    if not gate["ready"]:
+        st.warning(
+            "Final notes and exports are locked until review is complete. "
+            f"{gate['pending']} of {gate['total']} explanation(s) are still pending."
+        )
+
+    if st.button("Generate Final Accessible Notes", type="primary", disabled=not intelligence or not gate["ready"]):
         st.session_state["final_summary"] = generate_final_summary(
             transcript=st.session_state["transcript_corrected"],
             simplifications=intelligence["simplifications"],
-            action_items=intelligence.get("action_items", []),
+            action_items=normalize_action_items(st.session_state.get("action_items_review_text", "")),
             review_items=review_items,
             review_audit=st.session_state["review_audit"],
             asr_status=st.session_state["asr_status"],
@@ -199,6 +246,15 @@ def render_final_summary(intelligence: dict) -> None:
     summary = st.session_state.get("final_summary")
     if not summary:
         return
+
+    st.subheader("Final Accessible Meeting Notes")
+    st.markdown("**Readable corrected transcript**")
+    st.text_area(
+        "Corrected transcript used for final notes",
+        value=summary["transcript"],
+        height=170,
+        disabled=True,
+    )
 
     st.markdown("**Plain English summary**")
     st.write(summary["plain_english_summary"])
@@ -229,6 +285,12 @@ def render_final_summary(intelligence: dict) -> None:
         f"ASR: {metadata['asr'].get('provider')} `{metadata['asr'].get('model')}` | "
         f"LLM: {metadata['llm'].get('provider')} `{metadata['llm'].get('model')}`"
     )
+
+    with st.expander("Review audit"):
+        if summary["review_audit"]:
+            st.json(summary["review_audit"])
+        else:
+            st.write("No review actions recorded.")
 
     st.download_button(
         "Download summary as JSON",
@@ -373,6 +435,7 @@ def main() -> None:
                 st.session_state["review_items"] = {}
                 st.session_state["review_audit"] = []
                 st.session_state["approved_glossary"] = {}
+                st.session_state["action_items_review_text"] = ""
                 st.session_state["final_summary"] = None
             else:
                 st.session_state["transcript_raw"] = ""
@@ -400,6 +463,13 @@ def main() -> None:
             "Correct transcript before AI analysis",
             value=st.session_state["transcript_corrected"],
             height=140,
+        )
+        st.subheader("Readable Transcript")
+        st.text_area(
+            "Large readable corrected transcript",
+            value=st.session_state["transcript_corrected"],
+            height=180,
+            disabled=True,
         )
         corrected_transcript = st.session_state["transcript_corrected"].strip()
         baseline_terms = detect_terms(corrected_transcript)
@@ -446,6 +516,7 @@ def main() -> None:
                     st.session_state["merged_terms"] = baseline_terms
                     st.session_state["review_items"] = {}
                     st.session_state["approved_glossary"] = {}
+                    st.session_state["action_items_review_text"] = ""
                     st.session_state["final_summary"] = None
                     st.session_state["llm_status"] = {
                         "ready": False,
@@ -465,6 +536,7 @@ def main() -> None:
                     )
                     st.session_state["review_audit"] = []
                     st.session_state["approved_glossary"] = {}
+                    st.session_state["action_items_review_text"] = "\n".join(intelligence.get("action_items", []))
                     st.session_state["final_summary"] = None
                     st.session_state["llm_status"] = {
                         "ready": True,
@@ -499,6 +571,7 @@ def main() -> None:
                 st.markdown("**Action items**")
                 for item in intelligence["action_items"]:
                     st.write(f"- {item}")
+            render_action_item_review(intelligence)
 
         merged_terms = st.session_state.get("merged_terms") or baseline_terms
         if merged_terms:
@@ -523,7 +596,7 @@ def main() -> None:
             st.subheader("Human Review")
             render_review_panel()
 
-            st.subheader("Final Summary And Export")
+            st.subheader("Final Notes And Export")
             render_final_summary(intelligence)
     elif st.session_state["asr_status"]["last_error"]:
         st.error(st.session_state["asr_status"]["last_error"])
@@ -549,6 +622,7 @@ def main() -> None:
                 "merged_terms": st.session_state["merged_terms"],
                 "review_items": st.session_state["review_items"],
                 "review_audit": st.session_state["review_audit"],
+                "action_items_review_text": st.session_state["action_items_review_text"],
                 "final_summary": st.session_state["final_summary"],
             }
         )

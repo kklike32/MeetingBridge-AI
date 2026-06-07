@@ -72,9 +72,14 @@ class SummaryTests(unittest.TestCase):
         self.assertEqual(summary["model_metadata"]["asr"]["provider"], "mlx_whisper")
         self.assertEqual(summary["model_metadata"]["llm"]["model"], "qwen3:8b")
         self.assertEqual(summary["review_audit"], audit)
+        self.assertEqual(
+            summary["review_progress"],
+            {"pending": 0, "approved": 1, "edited": 1, "rejected": 1, "total": 3},
+        )
 
     def test_json_and_markdown_exports_include_reviewed_output(self):
         summary = {
+            "transcript": "Corrected transcript text.",
             "plain_english_summary": "Plain output.",
             "key_terms": [{"term": "ARR", "canonical": "Annual Recurring Revenue"}],
             "action_items": ["Improve ARR."],
@@ -89,15 +94,27 @@ class SummaryTests(unittest.TestCase):
                 "asr": {"provider": "mlx_whisper", "model": "mlx-community/whisper-large-v3-turbo"},
                 "llm": {"provider": "ollama", "model": "qwen3:8b"},
             },
-            "review_audit": [],
+            "review_audit": [
+                {
+                    "timestamp": "2026-06-07T12:00:00Z",
+                    "term": "ARR",
+                    "action": "edit",
+                    "before": "Old explanation.",
+                    "after": "New explanation.",
+                    "source_model": "qwen3:8b",
+                }
+            ],
         }
 
         parsed = json.loads(final_summary_to_json(summary))
         markdown = final_summary_to_markdown(summary)
 
         self.assertEqual(parsed["plain_english_summary"], "Plain output.")
+        self.assertIn("Corrected transcript text.", markdown)
         self.assertIn("The predictable subscription revenue", markdown)
         self.assertIn("ollama qwen3:8b", markdown)
+        self.assertIn("## Review Audit", markdown)
+        self.assertIn("ARR: edit", markdown)
 
 
 if __name__ == "__main__":
