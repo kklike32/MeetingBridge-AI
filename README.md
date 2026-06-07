@@ -15,6 +15,7 @@ This repo is currently implemented through Phase 8.5:
 - Phase 7: human review with approve, edit, reject, session-state audit trail, and approved glossary generation
 - Phase 8: final summary with model metadata plus JSON, Markdown, and review audit exports
 - Phase 8.5: accessibility-first review gate, readable transcript and notes view, action-item confirmation, and human-approved exports
+- Participant Mode: plain-language final notes for hard-of-hearing participants with an understanding checklist and accessibility risk flags
 
 ## Setup
 
@@ -77,7 +78,8 @@ The demo must start from real audio:
 8. Confirm or edit generated action items in the action-item review field.
 9. Complete the review gate by approving, editing, or rejecting every explanation.
 10. Generate the final accessible notes and confirm rejected terms are excluded while edited explanations appear in the human-approved glossary.
-11. Download the notes as JSON or Markdown, or export the review audit JSON.
+11. Review Participant Mode / Accessibility View for plain-language sections, understanding checklist, and accessibility risk flags.
+12. Download the notes as JSON or Markdown, or export the review audit JSON.
 
 There is no paste-only transcript route and no fake transcription fallback.
 
@@ -115,3 +117,10 @@ git push
 ```text
 Let's revisit our GTM motion before Q3 and improve ARR through our PLG initiative while reducing churn across enterprise accounts.
 ```
+
+## Judging Rubric Mapping
+
+- **Technical Implementation:** Real microphone/upload audio, local ASR, local LLM JSON generation, review-gated final notes, tests, and JSON/Markdown exports.
+- **Human-AI Collaboration:** AI proposes transcript simplifications and glossary entries; humans approve, edit, reject, and confirm action items before final output.
+- **Impact & Relevance:** Participant Mode gives hard-of-hearing users short plain-language sections, reviewed terms, action items, checklist state, and explicit accessibility risk flags.
+- **Presentation & Demo:** The demo follows one clear audio-to-transcript-to-review-to-participant-notes flow using the required sentence and visible model readiness blockers.

@@ -3,6 +3,7 @@ import unittest
 
 from src.review import apply_review_action, initialize_review_items
 from src.summary import (
+    build_participant_accessibility_view,
     final_summary_to_json,
     final_summary_to_markdown,
     generate_final_summary,
@@ -115,6 +116,82 @@ class SummaryTests(unittest.TestCase):
         self.assertIn("ollama qwen3:8b", markdown)
         self.assertIn("## Review Audit", markdown)
         self.assertIn("ARR: edit", markdown)
+
+    def test_participant_accessibility_view_groups_plain_language_output_and_risk_flags(self):
+        summary = {
+            "transcript": "Corrected transcript text.",
+            "plain_english_summary": "Plain output.",
+            "action_items": ["Improve ARR."],
+            "human_approved_glossary": [
+                {
+                    "term": "ARR",
+                    "canonical": "Annual Recurring Revenue",
+                    "explanation": "The predictable subscription revenue the business expects each year.",
+                    "status": "edited",
+                }
+            ],
+            "needs_review": [{"term": "GTM", "canonical": "Go-to-Market", "status": "pending"}],
+            "review_progress": {"pending": 1, "approved": 0, "edited": 1, "rejected": 1, "total": 3},
+        }
+
+        participant_view = build_participant_accessibility_view(
+            summary,
+            transcript_raw="Raw ASR transcript text.",
+        )
+
+        self.assertEqual(participant_view["sections"]["what_was_said"], "Corrected transcript text.")
+        self.assertEqual(participant_view["sections"]["what_it_means"], "Plain output.")
+        self.assertEqual(participant_view["sections"]["what_i_need_to_do_next"], ["Improve ARR."])
+        self.assertEqual(participant_view["sections"]["terms_i_may_not_know"][0]["term"], "ARR")
+        self.assertTrue(participant_view["understanding_checklist"]["transcript_reviewed"])
+        self.assertFalse(participant_view["understanding_checklist"]["glossary_terms_reviewed"])
+        self.assertTrue(participant_view["understanding_checklist"]["action_items_confirmed"])
+        self.assertFalse(participant_view["understanding_checklist"]["final_notes_ready"])
+        self.assertEqual(participant_view["risk_flags"]["pending_review_terms"]["count"], 1)
+        self.assertEqual(participant_view["risk_flags"]["rejected_terms_excluded"]["count"], 1)
+        self.assertEqual(participant_view["risk_flags"]["edited_explanations_used"]["count"], 1)
+        self.assertTrue(participant_view["risk_flags"]["transcript_corrected_after_asr"]["active"])
+        self.assertFalse(participant_view["risk_flags"]["missing_or_unconfirmed_action_items"]["active"])
+
+    def test_markdown_export_includes_participant_accessibility_view_when_present(self):
+        summary = {
+            "transcript": "Corrected transcript text.",
+            "plain_english_summary": "Plain output.",
+            "key_terms": [],
+            "action_items": [],
+            "human_approved_glossary": [],
+            "participant_accessibility_view": {
+                "sections": {
+                    "what_was_said": "Corrected transcript text.",
+                    "what_it_means": "Plain output.",
+                    "terms_i_may_not_know": [],
+                    "what_i_need_to_do_next": [],
+                },
+                "understanding_checklist": {
+                    "transcript_reviewed": True,
+                    "glossary_terms_reviewed": True,
+                    "action_items_confirmed": False,
+                    "final_notes_ready": False,
+                },
+                "risk_flags": {
+                    "missing_or_unconfirmed_action_items": {
+                        "active": True,
+                        "label": "Missing or unconfirmed action items",
+                        "details": "No confirmed action items are included.",
+                    }
+                },
+            },
+            "model_metadata": {"asr": {}, "llm": {}},
+            "review_audit": [],
+        }
+
+        markdown = final_summary_to_markdown(summary)
+
+        self.assertIn("## Participant Mode / Accessibility View", markdown)
+        self.assertIn("### What was said", markdown)
+        self.assertIn("- [x] Transcript reviewed", markdown)
+        self.assertIn("- [ ] Action items confirmed", markdown)
+        self.assertIn("Missing or unconfirmed action items", markdown)
 
 
 if __name__ == "__main__":

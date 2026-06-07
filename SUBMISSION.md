@@ -89,6 +89,7 @@ Current implementation status:
 - Human review is implemented with approve, edit, reject, progress counts, a review gate, and an audit trail.
 - Final accessible meeting notes are implemented with a readable corrected transcript, plain English summary, key terms, action items, human-approved glossary, ASR/LLM metadata, review audit, and JSON/Markdown downloads.
 - Generated action items can be confirmed or edited before final notes.
+- Participant Mode / Accessibility View presents the final output in short hard-of-hearing-friendly sections, with an understanding checklist and explicit accessibility risk flags.
 
 ## How was AI used in your solution?
 
@@ -107,3 +108,10 @@ TBD
 ## Paste the GitHub repository link.
 
 https://github.com/kklike32/MeetingBridge-AI
+
+## Judging Rubric Mapping
+
+- **Technical Implementation:** The demo path uses real microphone or uploaded audio, real local ASR, real local LLM JSON output, review-gated summaries, exports, and automated checks.
+- **Human-AI Collaboration:** AI produces candidate explanations and action items, while a human approves, edits, rejects, and confirms what reaches the final notes.
+- **Impact & Relevance:** The final Participant Mode view is designed for hard-of-hearing participants who need readable meeting meaning, reviewed terms, next steps, and visible risk flags.
+- **Presentation & Demo:** The two-minute flow is audio first, then transcript correction, LLM analysis, human review, final accessible notes, and Participant Mode for judging.

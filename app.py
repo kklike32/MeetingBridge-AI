@@ -26,6 +26,7 @@ from src.review import (
     review_progress,
 )
 from src.summary import (
+    build_participant_accessibility_view,
     final_summary_to_json,
     final_summary_to_markdown,
     generate_final_summary,
@@ -217,6 +218,55 @@ def render_action_item_review(intelligence: dict) -> None:
         st.info("The local LLM did not generate action items for this transcript.")
 
 
+def render_participant_accessibility_view(participant_view: dict) -> None:
+    sections = participant_view.get("sections", {})
+    checklist = participant_view.get("understanding_checklist", {})
+    risk_flags = participant_view.get("risk_flags", {})
+
+    st.markdown("## Participant Mode / Accessibility View")
+    st.write("A plain-language version of the reviewed meeting notes for participants.")
+
+    st.markdown("### What was said")
+    st.write(sections.get("what_was_said") or "No reviewed transcript available.")
+
+    st.markdown("### What it means")
+    st.write(sections.get("what_it_means") or "No plain-language summary available.")
+
+    st.markdown("### Terms I may not know")
+    glossary = sections.get("terms_i_may_not_know") or []
+    if glossary:
+        for entry in glossary:
+            st.markdown(f"**{entry.get('term', '')}** - {entry.get('canonical', '')}")
+            st.write(entry.get("explanation", ""))
+    else:
+        st.write("No reviewed glossary terms are included.")
+
+    st.markdown("### What I need to do next")
+    action_items = sections.get("what_i_need_to_do_next") or []
+    if action_items:
+        for item in action_items:
+            st.write(f"- {item}")
+    else:
+        st.write("No confirmed action items are included.")
+
+    st.markdown("### Understanding checklist")
+    checklist_labels = [
+        ("transcript_reviewed", "Transcript reviewed"),
+        ("glossary_terms_reviewed", "Glossary terms reviewed"),
+        ("action_items_confirmed", "Action items confirmed"),
+        ("final_notes_ready", "Final notes ready"),
+    ]
+    for key, label in checklist_labels:
+        st.checkbox(label, value=bool(checklist.get(key)), disabled=True, key=f"participant_check_{key}")
+
+    st.markdown("### Accessibility risk flags")
+    for flag in risk_flags.values():
+        status = "Needs attention" if flag.get("active") else "Clear"
+        count = flag.get("count", 0)
+        st.markdown(f"**{flag.get('label', 'Risk flag')}**: {status} ({count})")
+        st.write(flag.get("details", ""))
+
+
 def render_final_summary(intelligence: dict) -> None:
     review_items = st.session_state.get("review_items", {})
     approved_glossary = approved_glossary_from_review(review_items)
@@ -242,10 +292,19 @@ def render_final_summary(intelligence: dict) -> None:
             asr_status=st.session_state["asr_status"],
             llm_status=st.session_state["llm_status"],
         )
+        st.session_state["final_summary"]["participant_accessibility_view"] = build_participant_accessibility_view(
+            st.session_state["final_summary"],
+            transcript_raw=st.session_state.get("transcript_raw", ""),
+        )
 
     summary = st.session_state.get("final_summary")
     if not summary:
         return
+    if "participant_accessibility_view" not in summary:
+        summary["participant_accessibility_view"] = build_participant_accessibility_view(
+            summary,
+            transcript_raw=st.session_state.get("transcript_raw", ""),
+        )
 
     st.subheader("Final Accessible Meeting Notes")
     st.markdown("**Readable corrected transcript**")
@@ -279,6 +338,8 @@ def render_final_summary(intelligence: dict) -> None:
             st.write(f"- **{entry['term']}** ({entry['canonical']}): {entry['explanation']}")
     else:
         st.write("- No approved glossary entries yet.")
+
+    render_participant_accessibility_view(summary["participant_accessibility_view"])
 
     metadata = summary["model_metadata"]
     st.caption(
