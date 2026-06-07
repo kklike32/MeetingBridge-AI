@@ -4,113 +4,192 @@
 
 MeetingBridge AI
 
-## Name of the Team
+## Team Name
 
 MeetingBridge Builder
-
-## Select the Track
-
-TRACK 2: AI for Accessibility
 
 ## Team Number
 
 7
 
+## Track
+
+TRACK 2: AI for Accessibility
+
 ## One-Sentence Pitch
 
-MeetingBridge AI turns meeting audio into readable, human-approved explanations for deaf and hard-of-hearing participants first, while also rescuing everyone else from phrases like "optimize the GTM motion."
+MeetingBridge AI turns real meeting audio into human-approved plain English notes, so participants are not left behind by fast speech, acronyms, or workplace jargon.
 
-## What problem are you solving?
+## Short Pitch
 
-Meetings still depend heavily on spoken language. For deaf and hard-of-hearing participants, that can mean missing context, tone, decisions, and follow-up items unless the meeting has strong accessibility support.
+Meetings can be technically documented and still be hard to understand. Captions and transcripts capture words, but they often do not explain meaning. MeetingBridge AI starts with real browser-recorded or uploaded audio, transcribes it locally, explains jargon with a local LLM, and requires a human to approve, edit, or reject every explanation before final notes are generated.
 
-Transcription helps, but it is not always enough. A raw transcript can be fast, dense, messy, and full of jargon. MeetingBridge AI focuses on the full path from audio to understanding: capture the meeting, make it readable, explain the confusing parts, and let a human approve the final meaning.
+The core promise is simple: real audio in, human-approved understanding out.
 
-## Who experiences this problem, and how often does it happen?
+## The Problem
 
-This project is intentionally weighted toward accessibility:
+Modern meetings move quickly. People use acronyms, shorthand, metrics, and domain-specific phrases as if everyone in the room has the same context.
 
-- deaf and hard-of-hearing people who need meeting audio converted into clear, reviewable text and explanations.
-- people who can hear the meeting but still get lost in technical language, acronyms, and corporate shorthand.
+That creates an accessibility and inclusion gap for:
 
-It can happen daily in workplaces, classrooms, conferences, standups, customer calls, and project reviews. The meeting does not have to be hostile or badly run to exclude someone. Sometimes all it takes is fast speech, overlapping voices, missing captions, and one brave soul saying "PLG-led ARR expansion" like that is a normal thing humans say.
+- Deaf and hard-of-hearing participants who rely on transcripts or notes.
+- Non-native English speakers.
+- New hires and interns.
+- Cross-functional teammates.
+- Students or conference attendees joining a specialized conversation.
 
-## What inspired the idea?
+The problem is not only hearing the words. The problem is understanding what the words mean quickly enough to participate.
 
-The idea came from a simple accessibility gap: a meeting can be important, fast-moving, and technically "documented," but still not truly accessible to someone who cannot rely on hearing the conversation live.
+## The Solution
 
-Captions and transcripts are a start. The next step is comprehension support: clearer text, glossary-style explanations, and a human review step so the final output is useful instead of just algorithmically confident.
+MeetingBridge AI is a local Streamlit app that converts a short meeting clip into accessible meeting notes through a human-in-the-loop workflow:
 
-## Describe your solution in simple language.
+1. Record meeting audio in the browser or upload an audio file.
+2. Transcribe the audio with a real local ASR model.
+3. Correct the transcript only after ASR produces text.
+4. Detect acronyms, jargon, and confusing phrases.
+5. Generate simple, professional, and expert explanations with a real local LLM.
+6. Let a human approve, edit, or reject every explanation.
+7. Generate final participant notes with a reviewed glossary, action items, metadata, and audit trail.
 
-MeetingBridge AI is a local Streamlit app that starts with real meeting audio and turns it into accessible meeting support. The app checks whether local speech-to-text and local LLM models are ready, then the intended MVP flow is:
+MeetingBridge AI does not create a text-only shortcut, fake transcript, or mock LLM path for the demo.
 
-1. Record or upload meeting audio.
-2. Transcribe the audio locally.
-3. Let the user correct the transcript.
-4. Detect important terms, confusing language, acronyms, and jargon.
-5. Ask a real local LLM to explain the content at different simplicity levels.
-6. Require a human to approve, edit, or reject each explanation.
-7. Generate a final human-approved glossary and meeting summary that is easier to read after the meeting.
+## Demo Sentence
 
-The AI helps convert and explain. The human decides what is accurate.
+```text
+Let's revisit our GTM motion before Q3 and improve ARR through our PLG initiative while reducing churn across enterprise accounts.
+```
 
-## Why does this matter?
+Expected highlighted terms:
 
-Access to meetings is access to decisions. If deaf and hard-of-hearing participants cannot reliably follow what was said, they can be pushed out of the conversation even when they are invited to the calendar event.
+`GTM` | `Q3` | `ARR` | `PLG` | `churn` | `enterprise accounts`
 
-MeetingBridge AI helps make meetings more inclusive by turning spoken discussion into text that can be reviewed, clarified, and trusted. The jargon support also matters, but the core mission is accessibility: helping people participate when audio alone is not enough.
+## Demo Flow
 
-## What makes your solution unique compared to existing alternatives?
+```text
+Microphone or uploaded audio
+  -> local ASR transcript
+  -> transcript correction
+  -> local LLM simplification
+  -> human glossary review
+  -> final accessible notes
+```
 
-Most tools stop at transcription. MeetingBridge AI focuses on accessibility plus comprehension.
+Suggested one-minute demo:
 
-It is human-in-the-loop by design. The app does not treat AI explanations as automatically correct, especially when accessibility is on the line. People can approve, rewrite, or reject explanations before anything becomes final.
+- Explain that transcripts show words but not always meaning.
+- Record or upload the exact demo sentence.
+- Transcribe with local ASR.
+- Correct any ASR acronym mistakes.
+- Analyze locally with Qwen3 8B through Ollama.
+- Approve `GTM`, edit `ARR`, and reject an ambiguous term if one appears.
+- Generate final notes and show that only approved or edited explanations appear.
 
-The project is local-first, using real local ASR and local LLMs instead of sending sensitive meeting content to a hosted service. That matters for privacy, demos, and trust.
+## Technical Implementation
 
-It also handles the second problem hiding inside many meetings: even once the words are visible, they may still be confusing. MeetingBridge AI can explain terms like GTM, ARR, PLG, churn, and other workplace vocabulary without pretending those are obvious to everyone.
+Frontend and orchestration:
+
+- Streamlit single-page app.
+- `st.audio_input` for microphone recording.
+- `st.file_uploader` for audio upload.
+- Session-state workflow instead of a database.
+- JSON and Markdown exports.
+
+Speech-to-text:
+
+- Primary: `mlx-whisper`.
+- Primary model: `mlx-community/whisper-large-v3-turbo`.
+- Backup: `faster-whisper` with `small.en` or `base.en`.
+
+Local LLM:
+
+- Primary: Ollama `qwen3:8b`.
+- Backups: Ollama `gemma3:12b`, Ollama `mistral:7b`, or LM Studio if a real local model is loaded.
+- Prompts use `/no_think` and require strict JSON.
+- Invalid JSON retries once, then shows an actionable setup/model error.
+
+Human review:
+
+- Every explanation starts pending.
+- Review actions: approve, edit, reject.
+- Edited explanations flow into the final glossary.
+- Rejected explanations are excluded.
+- Review audit is exportable as JSON.
+
+Final output:
+
+- Corrected transcript.
+- Plain-English summary.
+- Key terms.
+- Confirmed action items.
+- Human-approved glossary.
+- Participant accessibility view.
+- Model metadata.
+- Review audit.
 
 ## Current Status
 
-Prototype
+Prototype ready for live mock testing.
 
-Current implementation status:
+Implemented:
 
-- Repo scaffold is in place.
-- Streamlit app shell exists.
-- Dependency and model preflight is implemented.
-- Required microphone recording and audio upload are implemented.
-- Real local ASR transcription is wired through MLX Whisper primary and faster-whisper backup.
-- Transcript correction happens only after ASR output exists.
-- Static, heuristic, acronym, and local LLM glossary candidates are merged for review.
-- Real local LLM simplification is wired through Ollama or LM Studio with strict JSON validation and no mock fallback.
-- Human review is implemented with approve, edit, reject, progress counts, a review gate, and an audit trail.
-- Final accessible meeting notes are implemented with a readable corrected transcript, plain English summary, key terms, action items, human-approved glossary, ASR/LLM metadata, review audit, and JSON/Markdown downloads.
-- Generated action items can be confirmed or edited before final notes.
-- Participant Mode / Accessibility View presents the final output in short hard-of-hearing-friendly sections, with an understanding checklist and explicit accessibility risk flags.
+- Streamlit app shell and accessible visual theme.
+- Model setup/readiness checks.
+- Required microphone recording.
+- Required audio upload.
+- Real local ASR transcription path.
+- Post-ASR transcript correction.
+- Static, regex, heuristic, and LLM-assisted jargon detection.
+- Real local LLM simplification with strict JSON handling.
+- Human review gate with approve, edit, reject, progress counts, and audit trail.
+- Action-item confirmation.
+- Final accessible meeting notes.
+- Participant accessibility view.
+- JSON, Markdown, and audit exports.
+- README, one-minute live script, and local logo asset.
+- Unit tests for core helpers.
 
-## How was AI used in your solution?
+## What Makes It Different
 
-AI-Assisted coding  
-AI Functionality
+Most meeting tools stop at transcription. MeetingBridge AI continues to comprehension.
 
-AI was used in two ways:
+The project is intentionally local-first for the demo path. It uses local ASR and local LLMs rather than hiding behind a hosted API. It is also human-in-the-loop by design: AI can suggest explanations, but the final glossary is controlled by the human reviewer.
 
-- During development, AI helped scaffold the local app structure, model preflight checks, and project documentation.
-- In the intended product flow, AI performs local speech-to-text transcription and local language simplification for accessibility-first meeting support, while human reviewers keep final authority over explanations.
+That matters for accessibility because a confidently wrong explanation can be worse than no explanation. The app makes review visible and mandatory.
 
-## Paste the video demo link.
+## AI Use
 
-TBD
+AI-assisted coding was used to help build and refine the app, documentation, and demo materials.
 
-## Paste the GitHub repository link.
+AI functionality inside the product includes:
+
+- Local speech-to-text transcription.
+- Local language simplification.
+- Contextual jargon and acronym explanation.
+- Action-item extraction.
+
+Human reviewers remain responsible for the final approved meaning.
+
+## Impact
+
+Access to meetings is access to decisions. MeetingBridge AI helps participants understand what happened, what terms meant, and what to do next.
+
+The accessibility-first benefit is for deaf and hard-of-hearing users who need clear reviewed meeting notes. The broader inclusion benefit is for anyone blocked by jargon, fast speech, or unfamiliar business language.
+
+## Links
+
+GitHub repository:
 
 https://github.com/kklike32/MeetingBridge-AI
 
+Video demo:
+
+TBD
+
 ## Judging Rubric Mapping
 
-- **Technical Implementation:** The demo path uses real microphone or uploaded audio, real local ASR, real local LLM JSON output, review-gated summaries, exports, and automated checks.
-- **Human-AI Collaboration:** AI produces candidate explanations and action items, while a human approves, edits, rejects, and confirms what reaches the final notes.
-- **Impact & Relevance:** The final Participant Mode view is designed for hard-of-hearing participants who need readable meeting meaning, reviewed terms, next steps, and visible risk flags.
-- **Presentation & Demo:** The two-minute flow is audio first, then transcript correction, LLM analysis, human review, final accessible notes, and Participant Mode for judging.
+- **Impact:** Helps people participate when transcripts alone are not enough.
+- **Creativity:** Combines real audio, local ASR, local LLM simplification, jargon detection, and human approval in one short workflow.
+- **Technical Execution:** Uses real local model paths, structured JSON validation, review state, exports, and automated helper tests.
+- **Human-AI Collaboration:** AI proposes explanations; humans approve, edit, reject, and confirm the final meaning.
+- **Presentation:** The live demo can be completed in about one minute using the exact required sentence and visible model readiness checks.
