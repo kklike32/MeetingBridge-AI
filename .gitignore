@@ -5,6 +5,8 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .DS_Store
+AGENTS.md
+.agents/
 
 # Local model/runtime artifacts
 data/
@@ -12,4 +14,3 @@ data/
 *.mp3
 *.m4a
 *.flac
-

@@ -2,6 +2,8 @@
 
 Local Streamlit MVP for real meeting audio transcription, local LLM simplification, and human-reviewed explanations.
 
+Repository: https://github.com/kklike32/MeetingBridge-AI
+
 This repo is currently scaffolded through Phase 2 only:
 
 - Phase 1: runtime files and minimal Streamlit page
@@ -52,12 +54,35 @@ pip install faster-whisper
 ## Run
 
 ```bash
-streamlit run app.py
+./.venv/bin/streamlit run app.py
 ```
 
 The app shows readiness for Streamlit microphone support, MLX Whisper, faster-whisper, Ollama, and optionally LM Studio. Missing dependencies or models are shown as setup blockers rather than silently falling back to fake output.
 
 MLX Whisper requires Apple Metal/GPU access. In sandboxed or headless sessions, the package can be installed but fail at runtime with a Metal device error. In that case, run the Streamlit app from a normal macOS Terminal session or use the real `faster-whisper` backup path when transcription is implemented.
+
+## Git Workflow
+
+The repository is initialized on `main` and tracks `origin/main`.
+
+Commit only required source, tests, and documentation:
+
+- `app.py`
+- `requirements.txt`
+- `src/`
+- `tests/`
+- tracked project `.md` files such as `README.md`, `PRD.md`, `PROMPTS.md`, and `SUBMISSION.md`
+
+Do not commit `.venv/`, `__pycache__/`, generated audio, model files, `data/` exports, `AGENTS.md`, `.agents/`, or other local runtime artifacts.
+
+Before pushing, run the lightest relevant checks, then:
+
+```bash
+git status --short
+git add <required-files>
+git commit -m "<clear message>"
+git push
+```
 
 ## Demo Sentence
 

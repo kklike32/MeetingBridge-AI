@@ -12,10 +12,10 @@ Implement only Phase 1 and Phase 2 from the execution order:
 1. scaffold the repo files
 2. add dependency/model preflight
 
-Do not initialize git.
 Do not implement audio transcription or LLM analysis yet.
 No mock demo path.
 After editing, run the lightest available syntax/import checks and report what works and what is still blocked by missing dependencies or models.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
 ```
 
 ### Prompt 2: Required Audio And ASR
@@ -30,10 +30,10 @@ Implement Phase 3 and Phase 4:
 4. real ASR transcription with MLX Whisper primary and faster-whisper backup
 5. transcript correction field after ASR
 
-Do not initialize git.
 Do not add a text-only demo path.
 Do not add fake transcription.
 Verify with syntax/import checks and, if possible, run Streamlit locally.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
 ```
 
 ### Prompt 3: Jargon And Real LLM
@@ -50,10 +50,10 @@ Implement Phase 5 and Phase 6:
 6. real backup model selection for gemma3:12b, mistral:7b, or LM Studio
 7. merge LLM glossary terms with baseline detections
 
-Do not initialize git.
 Do not add mock simplification.
 If the LLM is unavailable, show a setup/model readiness error instead of fake output.
 Run targeted checks and report the exact model readiness status.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
 ```
 
 ### Prompt 4: Human Review And Final Summary
@@ -69,9 +69,9 @@ Implement Phase 7 and Phase 8:
 5. final summary with plain English summary, key terms, action items, human-approved glossary, and model metadata
 6. JSON and Markdown export
 
-Do not initialize git.
 Ensure rejected terms are excluded and edited explanations appear in the final output.
 Run the app or the closest possible verification and report the demo path status.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
 ```
 
 ### Prompt 5: Demo Polish
@@ -87,7 +87,7 @@ Implement Phase 9:
 5. two-minute demo script
 6. concise UI label polish
 
-Do not initialize git.
 Do not add mock/demo shortcuts.
 Run a final verification pass and report exactly what was tested.
+Commit only required source, test, and tracked documentation files, then push to origin/main. Never stage `AGENTS.md` or `.agents/`.
 ```
