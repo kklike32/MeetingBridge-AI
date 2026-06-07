@@ -4,12 +4,14 @@ Local Streamlit MVP for real meeting audio transcription, local LLM simplificati
 
 Repository: https://github.com/kklike32/MeetingBridge-AI
 
-This repo is currently scaffolded through Phase 2 only:
+This repo is currently implemented through Phase 4:
 
 - Phase 1: runtime files and minimal Streamlit page
 - Phase 2: dependency and local model preflight
+- Phase 3: required microphone recording and audio upload
+- Phase 4: real local ASR transcription with MLX Whisper primary and faster-whisper backup
 
-Audio recording, upload, transcription, jargon detection, LLM analysis, human review, and export are intentionally not implemented yet.
+Jargon detection, LLM analysis, human review, and export are intentionally not implemented yet.
 
 ## Setup
 
@@ -24,6 +26,7 @@ This project uses the repo-local `.venv`. Run app and verification commands thro
 ```bash
 ./.venv/bin/streamlit run app.py
 ./.venv/bin/python -m unittest tests/test_model_preflight.py
+./.venv/bin/python -m unittest tests/test_audio_inputs.py tests/test_transcription.py
 ```
 
 Primary local LLM:
@@ -59,7 +62,16 @@ pip install faster-whisper
 
 The app shows readiness for Streamlit microphone support, MLX Whisper, faster-whisper, Ollama, and optionally LM Studio. Missing dependencies or models are shown as setup blockers rather than silently falling back to fake output.
 
-MLX Whisper requires Apple Metal/GPU access. In sandboxed or headless sessions, the package can be installed but fail at runtime with a Metal device error. In that case, run the Streamlit app from a normal macOS Terminal session or use the real `faster-whisper` backup path when transcription is implemented.
+The demo must start from real audio:
+
+1. Record the demo sentence with the browser microphone, or upload a short WAV/MP3/M4A/MP4 clip.
+2. Click `Transcribe audio`.
+3. Review the raw ASR transcript.
+4. Correct the transcript only after ASR has produced text.
+
+There is no paste-only transcript route and no fake transcription fallback.
+
+MLX Whisper requires Apple Metal/GPU access. In sandboxed or headless sessions, the package can be installed but fail at runtime with a Metal device error. In that case, run the Streamlit app from a normal macOS Terminal session or use the real `faster-whisper` backup path.
 
 ## Git Workflow
 
