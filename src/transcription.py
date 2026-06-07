@@ -4,7 +4,8 @@ from typing import Any, Literal
 
 
 MLX_WHISPER_MODEL = "mlx-community/whisper-large-v3-turbo"
-FASTER_WHISPER_MODEL = "small.en"
+FASTER_WHISPER_MODEL = "base.en"
+_FASTER_WHISPER_CACHE: dict[str, Any] = {}
 
 AsrProvider = Literal["auto", "mlx_whisper", "faster_whisper"]
 
@@ -37,8 +38,14 @@ def transcribe_with_faster_whisper(path: str, model_size: str = FASTER_WHISPER_M
     try:
         from faster_whisper import WhisperModel
 
-        model = WhisperModel(model_size, device="cpu", compute_type="int8")
-        segments_iter, info = model.transcribe(path, beam_size=5, vad_filter=True)
+        if model_size not in _FASTER_WHISPER_CACHE:
+            _FASTER_WHISPER_CACHE[model_size] = WhisperModel(model_size, device="cpu", compute_type="int8")
+        model = _FASTER_WHISPER_CACHE[model_size]
+        segments_iter, info = model.transcribe(
+            path,
+            beam_size=1,
+            vad_filter=False,
+        )
         segments = list(segments_iter)
     except Exception as exc:  # noqa: BLE001 - model/runtime failures are UI-facing setup errors.
         return _failure("faster_whisper", model_size, exc)

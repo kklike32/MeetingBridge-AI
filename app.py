@@ -749,6 +749,7 @@ def main() -> None:
         asr_provider_label = st.selectbox(
             "ASR provider",
             ["Auto: MLX Whisper, then faster-whisper", "MLX Whisper", "faster-whisper"],
+            index=2,
         )
         provider_map = {
             "Auto: MLX Whisper, then faster-whisper": "auto",
@@ -757,7 +758,7 @@ def main() -> None:
         }
         asr_provider = provider_map[asr_provider_label]
         mlx_model = st.text_input("MLX Whisper model", value=MLX_WHISPER_MODEL)
-        faster_model = st.selectbox("faster-whisper model", ["small.en", "base.en"], index=0)
+        faster_model = st.selectbox("faster-whisper model", ["base.en", "small.en"], index=0)
         if not faster_model:
             faster_model = FASTER_WHISPER_MODEL
 
