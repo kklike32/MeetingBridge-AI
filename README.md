@@ -4,14 +4,16 @@ Local Streamlit MVP for real meeting audio transcription, local LLM simplificati
 
 Repository: https://github.com/kklike32/MeetingBridge-AI
 
-This repo is currently implemented through Phase 4:
+This repo is currently implemented through Phase 6:
 
 - Phase 1: runtime files and minimal Streamlit page
 - Phase 2: dependency and local model preflight
 - Phase 3: required microphone recording and audio upload
 - Phase 4: real local ASR transcription with MLX Whisper primary and faster-whisper backup
+- Phase 5: static dictionary, acronym detection, and baseline heuristic jargon detection
+- Phase 6: real local LLM simplification, JSON validation, retry handling, and merged glossary candidates
 
-Jargon detection, LLM analysis, human review, and export are intentionally not implemented yet.
+Human review and export are intentionally not implemented yet.
 
 ## Setup
 
@@ -68,8 +70,12 @@ The demo must start from real audio:
 2. Click `Transcribe audio`.
 3. Review the raw ASR transcript.
 4. Correct the transcript only after ASR has produced text.
+5. Review baseline jargon candidates.
+6. Click `Analyze with local LLM` to generate real model simplifications and merged glossary candidates.
 
 There is no paste-only transcript route and no fake transcription fallback.
+
+LLM analysis uses the selected real local model only. If Ollama or LM Studio is unavailable, or if the selected model is missing or returns malformed JSON after one retry, the app shows the setup/model error and does not generate fake simplifications.
 
 MLX Whisper requires Apple Metal/GPU access. In sandboxed or headless sessions, the package can be installed but fail at runtime with a Metal device error. In that case, run the Streamlit app from a normal macOS Terminal session or use the real `faster-whisper` backup path.
 
