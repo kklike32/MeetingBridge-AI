@@ -6,11 +6,10 @@ MeetingBridge AI
 
 ## Name of the Team
 
-MeetingBridge Builders
+MeetingBridge Builder
 
 ## Select the Track
 
-TRACK 1: Human-in-the-Loop AI  
 TRACK 2: AI for Accessibility
 
 ## Team Number
@@ -31,8 +30,8 @@ Transcription helps, but it is not always enough. A raw transcript can be fast, 
 
 This project is intentionally weighted toward accessibility:
 
-- 70%: deaf and hard-of-hearing people who need meeting audio converted into clear, reviewable text and explanations.
-- 30%: people who can hear the meeting but still get lost in technical language, acronyms, and corporate shorthand.
+- deaf and hard-of-hearing people who need meeting audio converted into clear, reviewable text and explanations.
+- people who can hear the meeting but still get lost in technical language, acronyms, and corporate shorthand.
 
 It can happen daily in workplaces, classrooms, conferences, standups, customer calls, and project reviews. The meeting does not have to be hostile or badly run to exclude someone. Sometimes all it takes is fast speech, overlapping voices, missing captions, and one brave soul saying "PLG-led ARR expansion" like that is a normal thing humans say.
 
