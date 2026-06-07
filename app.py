@@ -480,7 +480,7 @@ def widget_key(prefix: str, term: str) -> str:
 def render_review_panel() -> None:
     review_items = st.session_state.get("review_items", {})
     if not review_items:
-        st.info("Run local LLM analysis to create review items.")
+        st.info("Analyze locally to create review items.")
         return
 
     progress = review_progress(review_items)
@@ -494,17 +494,17 @@ def render_review_panel() -> None:
         f"{gate['pending']} pending."
     )
     if gate["ready"]:
-        st.success("Review gate is complete. Final notes will use only approved or edited glossary items.")
+        st.success("Review complete. Final notes use only approved or edited glossary items.")
     else:
-        st.warning("Approve, edit, or reject every explanation before generating final accessible notes.")
+        st.warning("Approve, edit, or reject every explanation before generating final notes.")
 
     for term, item in review_items.items():
         status_label = item["status"].title()
         with st.expander(f"{item['term']} - Review status: {status_label}", expanded=item["status"] == "pending"):
             st.markdown(f"**Meaning:** {item['canonical']}")
-            st.markdown(f"**Review status:** {status_label}")
+            st.markdown(f"**Status:** {status_label}")
             st.markdown(f"**Review required:** {'Yes' if item.get('needs_review') else 'No'}")
-            st.markdown("**Current explanation:**")
+            st.markdown("**Explanation:**")
             st.write(item["current_explanation"])
             st.caption(
                 f"Source: {item.get('source', 'unknown')} | "
@@ -514,7 +514,7 @@ def render_review_panel() -> None:
 
             edit_key = widget_key("edit", term)
             st.text_area(
-                "Edit explanation",
+                "Edit",
                 value=item["current_explanation"],
                 key=edit_key,
                 height=90,
@@ -553,7 +553,7 @@ def render_review_panel() -> None:
         if st.session_state["review_audit"]:
             st.json(st.session_state["review_audit"])
             st.download_button(
-                "Export review audit JSON",
+                "Download audit JSON",
                 data=json.dumps(st.session_state["review_audit"], ensure_ascii=True, indent=2),
                 file_name="meetingbridge_review_audit.json",
                 mime="application/json",
@@ -564,12 +564,12 @@ def render_review_panel() -> None:
 
 def render_action_item_review(intelligence: dict) -> None:
     render_section_intro(
-        "Confirm action items",
+        "Action items",
         "Review the local LLM's next-step suggestions. The final notes use only the action items left in this field.",
     )
     with st.container(border=True):
         st.text_area(
-            "Confirmed action items, one per line",
+            "Confirmed items, one per line",
             key="action_items_review_text",
             height=140,
         )
@@ -590,7 +590,7 @@ def render_participant_accessibility_view(participant_view: dict) -> None:
     risk_flags = participant_view.get("risk_flags", {})
 
     render_section_intro(
-        "Participant notes",
+        "Participant view",
         "A plain-language version of the reviewed meeting notes for participants.",
     )
 
@@ -650,7 +650,7 @@ def render_final_summary(intelligence: dict) -> None:
             f"{gate['pending']} of {gate['total']} explanation(s) are still pending."
         )
 
-    if st.button("Generate Final Accessible Notes", type="primary", disabled=not intelligence or not gate["ready"]):
+    if st.button("Generate notes", type="primary", disabled=not intelligence or not gate["ready"]):
         st.session_state["final_summary"] = generate_final_summary(
             transcript=st.session_state["transcript_corrected"],
             simplifications=intelligence["simplifications"],
@@ -674,10 +674,10 @@ def render_final_summary(intelligence: dict) -> None:
             transcript_raw=st.session_state.get("transcript_raw", ""),
         )
 
-    st.subheader("Final Accessible Meeting Notes")
-    st.markdown("**Readable corrected transcript**")
+    st.subheader("Final notes")
+    st.markdown("**Corrected transcript**")
     st.text_area(
-        "Corrected transcript used for final notes",
+        "Final transcript",
         value=summary["transcript"],
         height=170,
         disabled=True,
@@ -722,13 +722,13 @@ def render_final_summary(intelligence: dict) -> None:
             st.write("No review actions recorded.")
 
     st.download_button(
-        "Download summary as JSON",
+        "Download JSON",
         data=final_summary_to_json(summary),
         file_name="meetingbridge_summary.json",
         mime="application/json",
     )
     st.download_button(
-        "Download summary as Markdown",
+        "Download Markdown",
         data=final_summary_to_markdown(summary),
         file_name="meetingbridge_summary.md",
         mime="text/markdown",
@@ -744,8 +744,8 @@ def main() -> None:
     render_workflow_stepper()
 
     with st.sidebar:
-        st.header("Models")
-        st.caption("Local-only model controls. Missing setup is shown as a blocker in the main flow.")
+        st.header("Model setup")
+        st.caption("Local model controls. Missing setup appears as a blocker.")
         asr_provider_label = st.selectbox(
             "ASR provider",
             ["Auto: MLX Whisper, then faster-whisper", "MLX Whisper", "faster-whisper"],
@@ -769,9 +769,9 @@ def main() -> None:
         lm_studio_model = st.text_input("LM Studio model", value="", help="Leave blank to use the first loaded LM Studio model.")
         lm_studio_base_url = st.text_input("LM Studio base URL", value=LM_STUDIO_DEFAULT_URL)
         llm_timeout = st.number_input("LLM timeout seconds", min_value=5, max_value=180, value=45, step=5)
-        run_checks = st.button("Run preflight checks", type="primary")
-        show_diagnostics = st.checkbox("Show model diagnostics")
-        if st.button("Reset session", use_container_width=True):
+        run_checks = st.button("Check setup", type="primary")
+        show_diagnostics = st.checkbox("Show diagnostics")
+        if st.button("Reset", use_container_width=True):
             reset_audio_state()
             st.rerun()
 
@@ -790,28 +790,28 @@ def main() -> None:
 
     has_setup_blocker = any(not result.ready for result in results.values())
     if has_setup_blocker:
-        st.warning("Setup blocker detected. Open readiness details for the exact fix.")
-    with st.expander("Setup readiness", expanded=has_setup_blocker):
-        st.write("Local model checks stay here so audio capture remains the main workspace.")
+        st.warning("Setup blocker detected. Open readiness for the exact fix.")
+    with st.expander("Readiness", expanded=has_setup_blocker):
+        st.write("Local model checks stay here so audio remains the main workspace.")
         render_preflight_cards(results)
     if show_diagnostics:
-        with st.expander("Detailed readiness messages"):
+        with st.expander("Readiness details"):
             for label, result in results.items():
                 st.markdown(f"**{label}**")
                 render_result(result)
 
     render_section_intro(
-        "Meeting audio",
+        "Audio",
         "Record with the browser microphone or upload a meeting clip. The transcript field appears only after local ASR runs.",
     )
 
     with st.container(border=True):
         audio_columns = st.columns([1.1, 1])
         with audio_columns[0]:
-            recorded_audio = st.audio_input("Record meeting audio", sample_rate=16000)
+            recorded_audio = st.audio_input("Record audio", sample_rate=16000)
         with audio_columns[1]:
             uploaded_audio = st.file_uploader(
-                "Upload meeting audio",
+                "Upload audio",
                 type=["wav", "mp3", "m4a", "mp4"],
             )
         with st.expander("Demo sentence"):
@@ -835,7 +835,7 @@ def main() -> None:
                 use_container_width=True,
             )
         with col_clear:
-            if st.button("Clear audio and transcript", use_container_width=True):
+            if st.button("Clear", use_container_width=True):
                 reset_audio_state()
                 st.rerun()
 
@@ -852,7 +852,7 @@ def main() -> None:
             st.session_state["audio_bytes_count"] = saved_audio.bytes_count
             st.session_state["transcript_source"] = saved_audio.source
 
-            with st.spinner("Transcribing locally with the selected real ASR model..."):
+            with st.spinner("Transcribing locally with the selected ASR model..."):
                 result = transcribe_audio(
                     saved_audio.path,
                     provider=asr_provider,
@@ -911,7 +911,7 @@ def main() -> None:
             with st.container(border=True):
                 st.markdown("**Corrected transcript**")
                 st.session_state["transcript_corrected"] = st.text_area(
-                    "Correct transcript before AI analysis",
+                    "Correct transcript",
                     value=st.session_state["transcript_corrected"],
                     height=180,
                 )
@@ -920,7 +920,7 @@ def main() -> None:
         st.session_state["baseline_terms"] = baseline_terms
 
         render_section_intro(
-            "Explain",
+            "Local analysis",
             "Run the selected local LLM after the transcript looks right.",
         )
         with st.expander("Baseline jargon candidates", expanded=False):
@@ -945,7 +945,7 @@ def main() -> None:
         llm_model = ollama_model if llm_provider == "ollama" else lm_studio_model.strip()
         llm_base_url = ollama_base_url if llm_provider == "ollama" else lm_studio_base_url
         analyze_clicked = st.button(
-            "Analyze with local LLM",
+            "Analyze locally",
             type="primary",
             disabled=not corrected_transcript,
             use_container_width=True,
@@ -1007,7 +1007,7 @@ def main() -> None:
 
         intelligence = st.session_state.get("meeting_intelligence")
         if intelligence:
-            st.markdown("**LLM simplification levels**")
+            st.markdown("**Simplifications**")
             simple_tab, professional_tab, expert_tab = st.tabs(["Simple", "Professional", "Expert"])
             with simple_tab:
                 st.write(intelligence["simplifications"]["simple"])
@@ -1050,7 +1050,7 @@ def main() -> None:
             if review_gate_status(st.session_state.get("review_items", {}))["ready"]:
                 render_action_item_review(intelligence)
                 render_section_intro(
-                    "Notes and export",
+                    "Notes",
                     "Generate participant notes after review, then download JSON, Markdown, or audit records.",
                 )
                 render_final_summary(intelligence)

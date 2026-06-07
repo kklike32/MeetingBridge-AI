@@ -1,126 +1,201 @@
-# MeetingBridge AI
+<p align="center">
+  <img src="./assets/meetingbridge-logo.svg" alt="MeetingBridge AI logo" width="760">
+</p>
 
-Local Streamlit MVP for real meeting audio transcription, local LLM simplification, and human-reviewed explanations.
+<h1 align="center">MeetingBridge AI</h1>
 
-Repository: https://github.com/kklike32/MeetingBridge-AI
+<p align="center">
+  <strong>Real meeting audio in. Human-approved plain English out.</strong>
+</p>
 
-This repo is currently implemented through Phase 8.5:
+<p align="center">
+  <a href="#quick-start"><img alt="Run locally" src="https://img.shields.io/badge/Run-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white"></a>
+  <a href="#required-models"><img alt="Local AI" src="https://img.shields.io/badge/AI-Local_Models-2850B8?style=for-the-badge"></a>
+  <a href="#two-minute-demo"><img alt="Two minute demo" src="https://img.shields.io/badge/Demo-2_Minutes-20B486?style=for-the-badge"></a>
+  <a href="#human-review"><img alt="Human in the loop" src="https://img.shields.io/badge/Human-Review_Required-FF8A4C?style=for-the-badge"></a>
+</p>
 
-- Phase 1: runtime files and minimal Streamlit page
-- Phase 2: dependency and local model preflight
-- Phase 3: required microphone recording and audio upload
-- Phase 4: real local ASR transcription with MLX Whisper primary and faster-whisper backup
-- Phase 5: static dictionary, acronym detection, and baseline heuristic jargon detection
-- Phase 6: real local LLM simplification, JSON validation, retry handling, and merged glossary candidates
-- Phase 7: human review with approve, edit, reject, session-state audit trail, and approved glossary generation
-- Phase 8: final summary with model metadata plus JSON, Markdown, and review audit exports
-- Phase 8.5: accessibility-first review gate, readable transcript and notes view, action-item confirmation, and human-approved exports
-- Participant Mode: plain-language final notes for hard-of-hearing participants with an understanding checklist and accessibility risk flags
+## The Problem
 
-## Setup
+Meetings can be technically "accessible" and still be hard to understand.
+
+Transcripts capture words, but they do not explain what those words mean. A new hire, intern, non-native English speaker, hard-of-hearing participant, or cross-functional teammate can read every line and still get stuck on shorthand like:
+
+- `GTM`
+- `ARR`
+- `PLG`
+- `churn`
+- `enterprise accounts`
+
+MeetingBridge AI turns that gap into a demo-ready accessibility workflow: real audio, local transcription, local LLM explanation, and a human reviewer before anything becomes final.
+
+## The Solution
+
+MeetingBridge AI is a local Streamlit app that helps people understand meetings without sending the demo path to cloud AI services.
+
+| Stage | What Happens | Why It Matters |
+| --- | --- | --- |
+| Audio | Record in the browser or upload a meeting clip | The demo starts from real meeting audio, not pasted text |
+| ASR | Transcribe with MLX Whisper or faster-whisper | Participants get an editable transcript from a real local speech model |
+| Explain | Generate simple, professional, and expert rewrites with a local LLM | Meeting language becomes understandable at multiple levels |
+| Review | Approve, edit, or reject every explanation | AI is helpful, but the human remains the final authority |
+| Notes | Export reviewed participant notes, glossary, action items, and audit trail | The final output reflects human-approved meaning |
+
+## Demo Flow
+
+```text
+Microphone or audio upload
+  -> local ASR transcript
+  -> transcript correction
+  -> local LLM simplification
+  -> human glossary review
+  -> final accessible notes
+```
+
+No mock output. No fake transcript. No paste-only demo shortcut.
+
+## Quick Start
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-This project uses the repo-local `.venv`. Run app and verification commands through that environment:
-
-```bash
+./.venv/bin/python -m pip install --upgrade pip
+./.venv/bin/python -m pip install -r requirements.txt
+ollama pull qwen3:8b
 ./.venv/bin/streamlit run app.py
-./.venv/bin/python -m unittest tests/test_model_preflight.py
-./.venv/bin/python -m unittest tests/test_audio_inputs.py tests/test_transcription.py
 ```
 
-Primary local LLM:
+Open the Streamlit URL and click `Check setup`. The app will show readiness blockers for missing local models or dependencies.
+
+## Required Models
+
+Primary LLM:
 
 ```bash
 ollama pull qwen3:8b
 ```
 
-Optional real LLM backups:
+Real LLM backups:
 
 ```bash
 ollama pull gemma3:12b
 ollama pull mistral:7b
 ```
 
-Primary ASR package:
+Primary ASR:
 
-```bash
-pip install mlx-whisper mlx
+```text
+mlx-whisper
+model: mlx-community/whisper-large-v3-turbo
 ```
 
 Real ASR backup:
 
-```bash
-pip install faster-whisper
+```text
+faster-whisper
+model: small.en or base.en
 ```
 
-## Run
+Import checks:
 
 ```bash
-./.venv/bin/streamlit run app.py
+./.venv/bin/python -c "import mlx_whisper; print('mlx-whisper ready')"
+./.venv/bin/python -c "import faster_whisper; print('faster-whisper ready')"
 ```
 
-The app shows readiness for Streamlit microphone support, MLX Whisper, faster-whisper, Ollama, and optionally LM Studio. Missing dependencies or models are shown as setup blockers rather than silently falling back to fake output.
+MLX Whisper may need normal macOS Metal/GPU access. If MLX is unavailable during the demo, switch to the real `faster-whisper` backup in the sidebar.
 
-The demo must start from real audio:
+## Exact Demo Sentence
 
-1. Record the demo sentence with the browser microphone, or upload a short WAV/MP3/M4A/MP4 clip.
-2. Click `Transcribe audio`.
-3. Review the raw ASR transcript.
-4. Correct the transcript only after ASR has produced text.
-5. Review baseline jargon candidates.
-6. Click `Analyze with local LLM` to generate real model simplifications and merged glossary candidates.
-7. Review terms: approve `GTM`, edit `ARR` to `The predictable subscription revenue the business expects each year.`, and reject an ambiguous term such as `motion` if it appears.
-8. Confirm or edit generated action items in the action-item review field.
-9. Complete the review gate by approving, editing, or rejecting every explanation.
-10. Generate the final accessible notes and confirm rejected terms are excluded while edited explanations appear in the human-approved glossary.
-11. Review Participant Mode / Accessibility View for plain-language sections, understanding checklist, and accessibility risk flags.
-12. Download the notes as JSON or Markdown, or export the review audit JSON.
-
-There is no paste-only transcript route and no fake transcription fallback.
-
-LLM analysis uses the selected real local model only. If Ollama or LM Studio is unavailable, or if the selected model is missing or returns malformed JSON after one retry, the app shows the setup/model error and does not generate fake simplifications.
-
-Review state is local to the current Streamlit session. The app does not write a database; review decisions, action-item edits, final notes, and audit entries are available through explicit download buttons.
-
-MLX Whisper requires Apple Metal/GPU access. In sandboxed or headless sessions, the package can be installed but fail at runtime with a Metal device error. In that case, run the Streamlit app from a normal macOS Terminal session or use the real `faster-whisper` backup path.
-
-## Git Workflow
-
-The repository is initialized on `main` and tracks `origin/main`.
-
-Commit only required source, tests, and documentation:
-
-- `app.py`
-- `requirements.txt`
-- `src/`
-- `tests/`
-- tracked project `.md` files such as `README.md`, `PRD.md`, `PROMPTS.md`, and `SUBMISSION.md`
-
-Do not commit `.venv/`, `__pycache__/`, generated audio, model files, `data/` exports, `AGENTS.md`, `.agents/`, or other local runtime artifacts.
-
-Before pushing, run the lightest relevant checks, then:
-
-```bash
-git status --short
-git add <required-files>
-git commit -m "<clear message>"
-git push
-```
-
-## Demo Sentence
+Speak this sentence into the microphone or upload an audio clip containing it:
 
 ```text
 Let's revisit our GTM motion before Q3 and improve ARR through our PLG initiative while reducing churn across enterprise accounts.
 ```
 
-## Judging Rubric Mapping
+Expected terms:
 
-- **Technical Implementation:** Real microphone/upload audio, local ASR, local LLM JSON generation, review-gated final notes, tests, and JSON/Markdown exports.
-- **Human-AI Collaboration:** AI proposes transcript simplifications and glossary entries; humans approve, edit, reject, and confirm action items before final output.
-- **Impact & Relevance:** Participant Mode gives hard-of-hearing users short plain-language sections, reviewed terms, action items, checklist state, and explicit accessibility risk flags.
-- **Presentation & Demo:** The demo follows one clear audio-to-transcript-to-review-to-participant-notes flow using the required sentence and visible model readiness blockers.
+`GTM` | `Q3` | `ARR` | `PLG` | `churn` | `enterprise accounts`
+
+## Audio Instructions
+
+1. Click `Record audio` and speak the exact demo sentence.
+2. If browser microphone permission fails, use `Upload audio` with a short WAV, MP3, M4A, or MP4 recording of the same sentence.
+3. Click `Transcribe audio`.
+4. Correct only ASR mistakes in the transcript field.
+5. Click `Analyze locally`.
+6. Review every glossary explanation.
+7. Click `Generate notes`.
+
+Text correction exists only after real ASR has produced a transcript.
+
+## Human Review
+
+The demo should visibly show that the AI does not get the last word.
+
+Suggested review sequence:
+
+- Approve `GTM`.
+- Edit `ARR` to: `The predictable subscription revenue the business expects each year.`
+- Reject one ambiguous term if it appears, such as `motion`.
+
+The final notes should include approved and edited terms only. Rejected terms stay out of the human-approved glossary.
+
+## Two-Minute Demo
+
+**0:00-0:15 - Problem**
+
+"Meeting transcripts capture words, but they do not explain meaning. If you are new to a team, joining from another function, or using transcripts for accessibility, acronyms like GTM, ARR, PLG, and churn can block participation."
+
+**0:15-0:30 - Real Audio**
+
+"MeetingBridge AI starts from real meeting audio. I can record through the browser or upload a clip. I will record a short meeting sentence now."
+
+Speak the exact demo sentence.
+
+**0:30-0:50 - Local Transcription**
+
+"The audio is transcribed locally. ASR can mishear acronyms, so I can correct the transcript before analysis."
+
+**0:50-1:15 - Local LLM**
+
+"Now the corrected transcript goes to a real local LLM. Qwen3 8B generates three versions: simple, professional, and expert."
+
+**1:15-1:35 - Human Review**
+
+"AI suggestions stay pending until a human approves, edits, or rejects them."
+
+Approve `GTM`, edit `ARR`, and reject an ambiguous term if one appears.
+
+**1:35-2:00 - Final Notes**
+
+"The final notes use the reviewed glossary, not raw AI output. Participants get a plain-English summary, key terms, action items, and a review audit."
+
+Show the edited `ARR` explanation in the final glossary.
+
+## Why It Fits The Track
+
+- **AI for Accessibility:** Meeting content becomes understandable for people who need more than a transcript.
+- **Human-in-the-Loop AI:** Every explanation must pass human review before final output.
+- **Local AI:** The demo path uses local ASR and local LLM models.
+- **Hackathon Feasibility:** The app is one Streamlit workflow with session state and export buttons, not production infrastructure.
+
+## Verification
+
+Run the lightest checks before committing:
+
+```bash
+./.venv/bin/python -m compileall app.py src tests
+./.venv/bin/python -m unittest discover tests
+```
+
+For live validation:
+
+```bash
+./.venv/bin/streamlit run app.py
+```
+
+Then complete the real-audio flow in the browser. If a model is missing, the app should show setup instructions instead of fabricating AI output.
+
+## Repository Rules
+
+Commit source, tests, docs, and docs assets only. Do not commit `.venv/`, `__pycache__/`, generated audio, model files, exported review logs, `AGENTS.md`, `.agents/`, or runtime artifacts.

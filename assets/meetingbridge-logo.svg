@@ -1,0 +1,17 @@
+<svg width="960" height="320" viewBox="0 0 960 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MeetingBridge AI logo</title>
+  <desc id="desc">A bridge-shaped audio waveform connecting meeting speech to accessible understanding.</desc>
+  <rect width="960" height="320" rx="48" fill="#F7FBFF"/>
+  <path d="M72 232C154 128 244 78 342 82C439 86 492 185 582 188C675 191 732 90 888 82" stroke="#2850B8" stroke-width="20" stroke-linecap="round"/>
+  <path d="M108 232H852" stroke="#17357F" stroke-width="12" stroke-linecap="round"/>
+  <rect x="150" y="152" width="28" height="80" rx="14" fill="#20B486"/>
+  <rect x="204" y="116" width="28" height="116" rx="14" fill="#FF8A4C"/>
+  <rect x="258" y="136" width="28" height="96" rx="14" fill="#7C5CFF"/>
+  <rect x="312" y="98" width="28" height="134" rx="14" fill="#20B486"/>
+  <rect x="366" y="128" width="28" height="104" rx="14" fill="#FF8A4C"/>
+  <circle cx="480" cy="160" r="54" fill="#FFFFFF" stroke="#2850B8" stroke-width="12"/>
+  <path d="M456 160H504M480 136V184" stroke="#2850B8" stroke-width="12" stroke-linecap="round"/>
+  <path d="M574 144H802" stroke="#7C5CFF" stroke-width="16" stroke-linecap="round"/>
+  <path d="M574 188H748" stroke="#20B486" stroke-width="16" stroke-linecap="round"/>
+  <path d="M574 232H690" stroke="#FF8A4C" stroke-width="16" stroke-linecap="round"/>
+</svg>
